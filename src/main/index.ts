@@ -5,6 +5,7 @@ import { getCharacterRegistry } from './services/character-registry';
 import { getWindowManager } from './window-manager';
 import { getTrayManager } from './tray';
 import { registerIpcHandlers } from './ipc/handlers';
+import { getReminderEngine } from './services/reminder-engine';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // Enforce single instance lock
@@ -36,25 +37,30 @@ if (!gotTheLock) {
     // 3. Initialize Window Manager
     const windowManager = getWindowManager(settingsStore);
 
-    // 4. Initialize Tray
+    // 4. Initialize Local Reminder Engine (Phase 2)
+    const reminderEngine = getReminderEngine(undefined, undefined, windowManager);
+    reminderEngine.init();
+
+    // 5. Initialize Tray
     const trayManager = getTrayManager(windowManager, settingsStore);
     trayManager.init();
 
-    // 5. Register IPC Handlers
-    registerIpcHandlers(windowManager, settingsStore, characterRegistry);
+    // 6. Register IPC Handlers
+    registerIpcHandlers(windowManager, settingsStore, characterRegistry, reminderEngine);
 
-    // 6. Launch Pet Window if visible setting is true
+    // 7. Launch Pet Window if visible setting is true
     const petVisible = settingsStore.get('pet.visible');
     if (petVisible) {
       windowManager.createPetWindow();
     }
 
-    console.log('[Main] ROA shell initialized successfully.');
+    console.log('[Main] ROA shell initialized successfully with Reminder Engine.');
   });
 
   app.on('before-quit', () => {
     isQuitting = true;
     (app as unknown as { isQuitting: boolean }).isQuitting = true;
+    getReminderEngine().shutdown();
     closeDb();
   });
 

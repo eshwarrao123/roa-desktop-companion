@@ -2,6 +2,12 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { ElectronRoaAPI } from '@shared/types/ipc';
 import { PetMood, PetPosition } from '@shared/types/pet';
 import { AppSettings, SettingKey } from '@shared/types/settings';
+import {
+  Reminder,
+  CreateReminderInput,
+  UpdateReminderInput,
+  ReminderHistory,
+} from '@shared/types/reminders';
 
 const roaApi: ElectronRoaAPI = {
   pet: {
@@ -16,6 +22,14 @@ const roaApi: ElectronRoaAPI = {
         ipcRenderer.removeListener('roa:pet:moodChanged', handler);
       };
     },
+    onReminderFired: (callback: (reminder: Reminder) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, reminder: Reminder) =>
+        callback(reminder);
+      ipcRenderer.on('roa:pet:reminderFired', handler);
+      return () => {
+        ipcRenderer.removeListener('roa:pet:reminderFired', handler);
+      };
+    },
     openContextMenu: () => ipcRenderer.invoke('roa:pet:openContextMenu'),
   },
   dashboard: {
@@ -25,6 +39,28 @@ const roaApi: ElectronRoaAPI = {
   character: {
     getActive: () => ipcRenderer.invoke('roa:character:getActive'),
     list: () => ipcRenderer.invoke('roa:character:list'),
+  },
+  reminders: {
+    list: () => ipcRenderer.invoke('roa:reminders:list'),
+    get: (id: string) => ipcRenderer.invoke('roa:reminders:get', id),
+    create: (input: CreateReminderInput) => ipcRenderer.invoke('roa:reminders:create', input),
+    update: (id: string, input: UpdateReminderInput) =>
+      ipcRenderer.invoke('roa:reminders:update', id, input),
+    delete: (id: string) => ipcRenderer.invoke('roa:reminders:delete', id),
+    enable: (id: string) => ipcRenderer.invoke('roa:reminders:enable', id),
+    disable: (id: string) => ipcRenderer.invoke('roa:reminders:disable', id),
+    snooze: (id: string, minutes: number) =>
+      ipcRenderer.invoke('roa:reminders:snooze', id, minutes),
+    getHistory: (reminderId: string, limit?: number) =>
+      ipcRenderer.invoke('roa:reminders:getHistory', reminderId, limit),
+    onReminderTriggered: (callback: (reminder: Reminder) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, reminder: Reminder) =>
+        callback(reminder);
+      ipcRenderer.on('roa:reminders:triggered', handler);
+      return () => {
+        ipcRenderer.removeListener('roa:reminders:triggered', handler);
+      };
+    },
   },
   settings: {
     get: <K extends SettingKey>(key: K) => ipcRenderer.invoke('roa:settings:get', key),
@@ -50,3 +86,4 @@ const roaApi: ElectronRoaAPI = {
 };
 
 contextBridge.exposeInMainWorld('roa', roaApi);
+

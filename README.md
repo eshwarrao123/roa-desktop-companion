@@ -8,9 +8,11 @@
 
 ## Project Status
 
-**Current Phase**: Planning & Architecture (Pre-Implementation)
+**Current Phase**: Phase 2 Complete (Local Reminder Engine)
 
-This repository contains the complete architectural specification for ROA. Implementation has not yet begun.
+- [x] **Phase 0 & 1**: Electron + React 19 + TypeScript + Vite Desktop Shell, transparent pet window, SQLite WAL migrations, tray lifecycle, strict IPC.
+- [x] **Phase 2**: Local/Offline Reminder Engine, ONE_TIME, INTERVAL, DAILY, WEEKLY schedules, watchdog recovery, sleep/resume handling, native Windows notifications, pet reminder reactions, and Reminders dashboard UI.
+- [ ] **Phase 3**: Timers & Pomodoro Engine.
 
 ### Planning Documents
 

@@ -2,19 +2,29 @@ import { ipcMain, Menu, BrowserWindow, app } from 'electron';
 import { z } from 'zod';
 import { PetMood, PetMoodSchema, PetPosition, PetPositionSchema } from '@shared/types/pet';
 import { AppSettings, SettingKey } from '@shared/types/settings';
+import {
+  CreateReminderInputSchema,
+  UpdateReminderInputSchema,
+  SnoozeInputSchema,
+  Reminder,
+  ReminderHistory,
+} from '@shared/types/reminders';
 import { WindowManager, getWindowManager } from '../window-manager';
 import { SettingsStore, getSettingsStore } from '../services/settings-store';
 import { CharacterRegistry, getCharacterRegistry } from '../services/character-registry';
+import { getReminderEngine, ReminderEngine } from '../services/reminder-engine';
 import { getTrayManager } from '../tray';
 
 export function registerIpcHandlers(
   windowManager?: WindowManager,
   settingsStore?: SettingsStore,
-  characterRegistry?: CharacterRegistry
+  characterRegistry?: CharacterRegistry,
+  reminderEngine?: ReminderEngine
 ): void {
   const winManager = windowManager ?? getWindowManager();
   const store = settingsStore ?? getSettingsStore();
   const registry = characterRegistry ?? getCharacterRegistry();
+  const engine = reminderEngine ?? getReminderEngine();
   const tray = getTrayManager(winManager, store);
 
   // Pet handlers
@@ -135,6 +145,62 @@ export function registerIpcHandlers(
     return registry.list();
   });
 
+  // Reminder handlers (Zod-validated)
+  ipcMain.handle('roa:reminders:list', async (): Promise<Reminder[]> => {
+    return engine.list();
+  });
+
+  ipcMain.handle('roa:reminders:get', async (_event, rawId: unknown): Promise<Reminder | null> => {
+    const id = z.string().min(1).parse(rawId);
+    return engine.get(id);
+  });
+
+  ipcMain.handle('roa:reminders:create', async (_event, rawInput: unknown): Promise<Reminder> => {
+    const input = CreateReminderInputSchema.parse(rawInput);
+    return engine.create(input);
+  });
+
+  ipcMain.handle(
+    'roa:reminders:update',
+    async (_event, rawId: unknown, rawInput: unknown): Promise<Reminder> => {
+      const id = z.string().min(1).parse(rawId);
+      const input = UpdateReminderInputSchema.parse(rawInput);
+      return engine.update(id, input);
+    }
+  );
+
+  ipcMain.handle('roa:reminders:delete', async (_event, rawId: unknown): Promise<void> => {
+    const id = z.string().min(1).parse(rawId);
+    engine.delete(id);
+  });
+
+  ipcMain.handle('roa:reminders:enable', async (_event, rawId: unknown): Promise<void> => {
+    const id = z.string().min(1).parse(rawId);
+    engine.enable(id);
+  });
+
+  ipcMain.handle('roa:reminders:disable', async (_event, rawId: unknown): Promise<void> => {
+    const id = z.string().min(1).parse(rawId);
+    engine.disable(id);
+  });
+
+  ipcMain.handle(
+    'roa:reminders:snooze',
+    async (_event, rawId: unknown, rawMinutes: unknown): Promise<void> => {
+      const { id, minutes } = SnoozeInputSchema.parse({ id: rawId, minutes: rawMinutes });
+      engine.snooze(id, minutes);
+    }
+  );
+
+  ipcMain.handle(
+    'roa:reminders:getHistory',
+    async (_event, rawId: unknown, rawLimit: unknown): Promise<ReminderHistory[]> => {
+      const id = z.string().min(1).parse(rawId);
+      const limit = z.number().int().positive().optional().parse(rawLimit);
+      return engine.getHistory(id, limit);
+    }
+  );
+
   // Settings handlers
   ipcMain.handle('roa:settings:get', async (_event, key: SettingKey) => {
     return store.get(key);
@@ -170,3 +236,4 @@ export function registerIpcHandlers(
     winManager.resetPetPosition();
   });
 }
+

@@ -286,6 +286,20 @@
 
 ---
 
+### 1.16 Missed Reminder Policy & Snooze Design (Phase 2)
+
+**Decision**: At most one catch-up notification on sleep/resume or app restart for overdue reminders; snooze temporarily shifts `next_run_at` without mutating the underlying recurrence schedule.
+
+**Rationale**:
+- Laptop sleep or app shutdown could cover multiple intervals (e.g. 6 hours asleep for a 30m reminder). Spamming multiple toasts ruins UX.
+- Recurrence calculation dynamically advances `next_run_at` strictly into the future (`> now`).
+- Snooze records a distinct `snoozed` history event and sets `next_run_at = now + minutes` while keeping the original schedule configuration intact.
+
+**Trade-offs**:
+- Intermediate missed triggers in the past are not individually notified, but logged in history as overdue recovery.
+
+---
+
 ## 2. Contradictions Identified & Resolved
 
 | # | Contradiction | Resolution |

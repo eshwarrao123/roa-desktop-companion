@@ -165,17 +165,23 @@ interface Migration {
   up: (db: Database.Database) => void;
 }
 
-const migrations: Migration[] = [
-  {
-    version: 1,
-    description: 'Initial schema',
-    up: (db) => {
-      // All CREATE TABLE statements above
-      db.exec(/* schema SQL */);
+    {
+      version: 1,
+      description: 'Initial schema',
+      up: (db) => {
+        // All CREATE TABLE statements above
+        db.exec(/* schema SQL */);
+      },
     },
-  },
-  // Future migrations added here
-];
+    {
+      version: 2,
+      description: 'Phase 2: Add one_time, interval, daily, weekly schedule types and history actions',
+      up: (db) => {
+        // Reminders table migration to support schedule_type IN ('one_time', 'interval', 'daily', 'weekly')
+        // and reminder_history actions IN ('triggered', 'dismissed', 'snoozed', 'completed')
+      },
+    },
+  ];
 
 export function runMigrations(db: Database.Database): void {
   const currentVersion = db.prepare('SELECT version FROM schema_version ORDER BY version DESC LIMIT 1').get()?.version ?? 0;

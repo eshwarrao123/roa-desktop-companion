@@ -1,5 +1,11 @@
 import { PetMood, PetPosition, CharacterManifest } from './pet';
 import { AppSettings, SettingKey } from './settings';
+import {
+  Reminder,
+  CreateReminderInput,
+  UpdateReminderInput,
+  ReminderHistory,
+} from './reminders';
 
 export interface ElectronRoaAPI {
   pet: {
@@ -8,6 +14,7 @@ export interface ElectronRoaAPI {
     setAlwaysOnTop: (flag: boolean) => Promise<void>;
     setMood: (mood: PetMood) => Promise<void>;
     onMoodChanged: (callback: (mood: PetMood) => void) => () => void;
+    onReminderFired: (callback: (reminder: Reminder) => void) => () => void;
     openContextMenu: () => Promise<void>;
   };
   dashboard: {
@@ -17,6 +24,18 @@ export interface ElectronRoaAPI {
   character: {
     getActive: () => Promise<CharacterManifest>;
     list: () => Promise<CharacterManifest[]>;
+  };
+  reminders: {
+    list: () => Promise<Reminder[]>;
+    get: (id: string) => Promise<Reminder | null>;
+    create: (input: CreateReminderInput) => Promise<Reminder>;
+    update: (id: string, input: UpdateReminderInput) => Promise<Reminder>;
+    delete: (id: string) => Promise<void>;
+    enable: (id: string) => Promise<void>;
+    disable: (id: string) => Promise<void>;
+    snooze: (id: string, minutes: number) => Promise<void>;
+    getHistory: (reminderId: string, limit?: number) => Promise<ReminderHistory[]>;
+    onReminderTriggered: (callback: (reminder: Reminder) => void) => () => void;
   };
   settings: {
     get: <K extends SettingKey>(key: K) => Promise<AppSettings[K]>;

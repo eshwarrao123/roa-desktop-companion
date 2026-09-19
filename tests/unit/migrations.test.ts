@@ -36,10 +36,12 @@ describe('SQLite Migrations', () => {
 
     runMigrations(mockDb);
 
-    // Verify migration was recorded
-    expect(appliedVersions.length).toBe(1);
+    // Verify migrations were recorded
+    expect(appliedVersions.length).toBe(migrations.length);
     expect(appliedVersions[0].version).toBe(1);
     expect(appliedVersions[0].description).toContain('Initial schema');
+    expect(appliedVersions[1].version).toBe(2);
+    expect(appliedVersions[1].description).toContain('Phase 2');
 
     // Verify executed SQL contains core tables
     const joinedSql = executedSql.join('\n');

@@ -91,6 +91,76 @@ export const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 2,
+    description: 'Phase 2: Add one_time, interval, daily, weekly schedule types and history actions',
+    up: (db: Database.Database) => {
+      db.exec(`
+        -- Create updated reminders table
+        CREATE TABLE IF NOT EXISTS reminders_v2 (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          description TEXT,
+          schedule_type TEXT NOT NULL CHECK (schedule_type IN ('one_time', 'interval', 'daily', 'weekly')),
+          schedule_data TEXT NOT NULL,
+          timezone TEXT DEFAULT 'local',
+          enabled INTEGER DEFAULT 1,
+          next_run_at INTEGER NOT NULL,
+          last_run_at INTEGER,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          metadata_json TEXT
+        );
+
+        -- Migrate data from v1 if present
+        INSERT INTO reminders_v2 (id, title, description, schedule_type, schedule_data, timezone, enabled, next_run_at, last_run_at, created_at, updated_at, metadata_json)
+        SELECT 
+          id, 
+          title, 
+          description, 
+          CASE 
+            WHEN schedule_type = 'once' THEN 'one_time'
+            WHEN schedule_type IN ('interval', 'daily', 'weekly') THEN schedule_type
+            ELSE 'one_time'
+          END, 
+          schedule_value, 
+          timezone, 
+          enabled, 
+          next_run_at, 
+          last_run_at, 
+          created_at, 
+          updated_at, 
+          metadata_json 
+        FROM reminders;
+
+        DROP TABLE reminders;
+        ALTER TABLE reminders_v2 RENAME TO reminders;
+
+        CREATE INDEX IF NOT EXISTS idx_reminders_next_run ON reminders(next_run_at) WHERE enabled = 1;
+        CREATE INDEX IF NOT EXISTS idx_reminders_enabled ON reminders(enabled);
+
+        -- Create updated reminder_history table
+        CREATE TABLE IF NOT EXISTS reminder_history_v2 (
+          id TEXT PRIMARY KEY,
+          reminder_id TEXT NOT NULL,
+          triggered_at INTEGER NOT NULL,
+          dismissed_at INTEGER,
+          snoozed_until INTEGER,
+          action TEXT NOT NULL CHECK (action IN ('triggered', 'dismissed', 'snoozed', 'completed')),
+          FOREIGN KEY (reminder_id) REFERENCES reminders(id) ON DELETE CASCADE
+        );
+
+        INSERT INTO reminder_history_v2 (id, reminder_id, triggered_at, dismissed_at, snoozed_until, action)
+        SELECT id, reminder_id, triggered_at, dismissed_at, snoozed_until, action FROM reminder_history;
+
+        DROP TABLE reminder_history;
+        ALTER TABLE reminder_history_v2 RENAME TO reminder_history;
+
+        CREATE INDEX IF NOT EXISTS idx_reminder_history_reminder ON reminder_history(reminder_id);
+        CREATE INDEX IF NOT EXISTS idx_reminder_history_triggered ON reminder_history(triggered_at);
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

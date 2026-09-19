@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Sparkles,
   Settings,
@@ -14,9 +14,19 @@ import {
   Moon,
   Smile,
   Bed,
+  Plus,
+  Search,
+  CheckCircle2,
+  Clock,
+  Filter,
 } from 'lucide-react';
 import { PetMood, PetPosition, CharacterManifest } from '@shared/types/pet';
 import { AppSettings } from '@shared/types/settings';
+import { Reminder, CreateReminderInput } from '@shared/types/reminders';
+import { useRemindersStore } from './store/useRemindersStore';
+import { ReminderModal } from './components/ReminderModal';
+import { ReminderItem } from './components/ReminderItem';
+
 
 export const DashboardApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'reminders' | 'ai' | 'settings'>('overview');
@@ -327,25 +337,9 @@ export const DashboardApp: React.FC = () => {
           </div>
         )}
 
-        {/* Phase 2: Reminders Placeholder */}
+        {/* Phase 2: Full Local Reminders Interface */}
         {activeTab === 'reminders' && (
-          <div className="max-w-3xl space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">Reminders Engine</h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Persistent, watchdog-backed reminder system. Scheduled for Phase 2.
-              </p>
-            </div>
-            <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-12 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-400 mx-auto flex items-center justify-center">
-                <Bell className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-semibold">Phase 2: Reminder Engine</h3>
-              <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-                In Phase 2, this section will provide full CRUD for one-time and recurring interval/cron reminders with watchdog recovery.
-              </p>
-            </div>
-          </div>
+          <RemindersTabContent />
         )}
 
         {/* Phase 5: AI Assistant Placeholder */}
@@ -422,3 +416,221 @@ export const DashboardApp: React.FC = () => {
     </div>
   );
 };
+
+const RemindersTabContent: React.FC = () => {
+  const {
+    reminders,
+    isLoading,
+    filter,
+    searchQuery,
+    fetchReminders,
+    createReminder,
+    updateReminder,
+    deleteReminder,
+    toggleReminder,
+    snoozeReminder,
+    setFilter,
+    setSearchQuery,
+  } = useRemindersStore();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+
+  useEffect(() => {
+    fetchReminders();
+
+    // Refresh on reminder triggers
+    const unsubscribe = window.roa?.reminders?.onReminderTriggered?.(() => {
+      fetchReminders();
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [fetchReminders]);
+
+  const filteredReminders = useMemo(() => {
+    return reminders.filter((r) => {
+      // Filter tab
+      if (filter === 'active' && !r.enabled) return false;
+      if (filter === 'completed' && r.enabled) return false;
+
+      // Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesTitle = r.title.toLowerCase().includes(q);
+        const matchesDesc = r.description?.toLowerCase().includes(q) ?? false;
+        if (!matchesTitle && !matchesDesc) return false;
+      }
+
+      return true;
+    });
+  }, [reminders, filter, searchQuery]);
+
+  const activeCount = reminders.filter((r) => r.enabled).length;
+  const nextReminder = reminders
+    .filter((r) => r.enabled)
+    .sort((a, b) => a.next_run_at - b.next_run_at)[0];
+
+  const handleOpenCreate = () => {
+    setEditingReminder(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (reminder: Reminder) => {
+    setEditingReminder(reminder);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveReminder = async (input: CreateReminderInput) => {
+    if (editingReminder) {
+      await updateReminder(editingReminder.id, input);
+    } else {
+      await createReminder(input);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl space-y-6">
+      {/* Header & New Reminder Action */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Local Reminders Engine</h2>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+            Offline-first scheduling backed by SQLite with watchdog recovery and native notifications.
+          </p>
+        </div>
+        <button
+          onClick={handleOpenCreate}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all hover:shadow"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add Reminder
+        </button>
+      </div>
+
+      {/* Stats Summary Cards */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] shadow-sm">
+          <span className="text-[11px] text-zinc-500 block mb-1">Active Reminders</span>
+          <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+            {activeCount}
+          </span>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] shadow-sm">
+          <span className="text-[11px] text-zinc-500 block mb-1">Total Scheduled</span>
+          <span className="text-xl font-bold text-zinc-800 dark:text-zinc-200">
+            {reminders.length}
+          </span>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] shadow-sm">
+          <span className="text-[11px] text-zinc-500 block mb-1">Next Occurrence</span>
+          <span className="text-xs font-semibold truncate text-emerald-600 dark:text-emerald-400 block mt-1 font-mono">
+            {nextReminder ? nextReminder.title : 'None scheduled'}
+          </span>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="flex items-center justify-between gap-3 pt-1">
+        {/* Search */}
+        <div className="relative flex-1 max-w-sm">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Search reminders..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+          />
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-[#1E1E38] rounded-xl border border-zinc-200/80 dark:border-zinc-800 text-xs">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+              filter === 'all'
+                ? 'bg-white dark:bg-[#252542] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilter('active')}
+            className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+              filter === 'active'
+                ? 'bg-white dark:bg-[#252542] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+            }`}
+          >
+            Active
+          </button>
+          <button
+            onClick={() => setFilter('completed')}
+            className={`px-3 py-1 rounded-lg font-medium transition-colors ${
+              filter === 'completed'
+                ? 'bg-white dark:bg-[#252542] text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+            }`}
+          >
+            Inactive
+          </button>
+        </div>
+      </div>
+
+      {/* Reminders List */}
+      <div className="space-y-3">
+        {filteredReminders.length > 0 ? (
+          filteredReminders.map((reminder) => (
+            <ReminderItem
+              key={reminder.id}
+              reminder={reminder}
+              onToggle={toggleReminder}
+              onEdit={handleOpenEdit}
+              onDelete={deleteReminder}
+              onSnooze={snoozeReminder}
+            />
+          ))
+        ) : (
+          <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl p-10 text-center space-y-3 bg-zinc-50/50 dark:bg-[#1E1E38]/30">
+            <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-400 mx-auto flex items-center justify-center">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold">No reminders found</h3>
+              <p className="text-xs text-zinc-500 max-w-xs mx-auto mt-0.5">
+                {searchQuery
+                  ? 'No reminders match your search query.'
+                  : filter === 'active'
+                  ? 'You have no active reminders right now.'
+                  : 'Get started by creating your first offline reminder.'}
+              </p>
+            </div>
+            {!searchQuery && (
+              <button
+                onClick={handleOpenCreate}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium shadow-sm transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Create Reminder
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Modal for Create/Edit */}
+      <ReminderModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSaveReminder}
+        initialReminder={editingReminder}
+      />
+    </div>
+  );
+};
+
