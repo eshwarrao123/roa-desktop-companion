@@ -281,6 +281,29 @@ Dashboard (900×700 default, resizable, min 700×500)
 └─────────────────────────────────────────────────────────────┘
 ```
 
+#### Companion Overview (Phase 3 Character Selector & Mood Controls)
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Desktop Companion Overview                                 │
+│  Select your companion, configure animation states...       │
+├─────────────────────────────────────────────────────────────┤
+│  Select Companion Character                   2 Available   │
+│  ┌───────────────────────────┐ ┌───────────────────────────┐│
+│  │ 🐱 Roa Cat          Active│ │ 🐰 Roa Bunny              ││
+│  │ A curious, loyal cat...   │ │ A cheerful, bouncy rabbit ││
+│  │ playful: 70%  calm: 80%   │ │ energetic: 80% playful: 90││
+│  │ [Current Companion]       │ │ [Choose Roa Bunny]        ││
+│  └───────────────────────────┘ └───────────────────────────┘│
+├─────────────────────────────────────────────────────────────┤
+│  Mood & Animation State                     Current: idle   │
+│  [☀️ Idle] [😊 Happy] [🛏️ Sleeping] [🧠 Thinking] [🎉 Celebrating]│
+├─────────────────────────────────────────────────────────────┤
+│  Pet Window & Placement                                     │
+│  Coordinates: X: 1650px • Y: 820px   Mode: Transparent      │
+│  [Always on Top: Enabled]  [Hide Pet]  [Reset Position]     │
+└─────────────────────────────────────────────────────────────┘
+```
+
 #### Reminders Page
 ```
 ┌─────────────────────────────────────────────────────────────┐

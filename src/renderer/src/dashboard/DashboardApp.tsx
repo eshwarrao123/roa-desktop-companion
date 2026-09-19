@@ -19,6 +19,8 @@ import {
   CheckCircle2,
   Clock,
   Filter,
+  Brain,
+  PartyPopper,
 } from 'lucide-react';
 import { PetMood, PetPosition, CharacterManifest } from '@shared/types/pet';
 import { AppSettings } from '@shared/types/settings';
@@ -26,11 +28,13 @@ import { Reminder, CreateReminderInput } from '@shared/types/reminders';
 import { useRemindersStore } from './store/useRemindersStore';
 import { ReminderModal } from './components/ReminderModal';
 import { ReminderItem } from './components/ReminderItem';
+import { CharacterCard } from './components/CharacterCard';
 
 
 export const DashboardApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'reminders' | 'ai' | 'settings'>('overview');
   const [character, setCharacter] = useState<CharacterManifest | null>(null);
+  const [characters, setCharacters] = useState<CharacterManifest[]>([]);
   const [mood, setMood] = useState<PetMood>('idle');
   const [position, setPosition] = useState<PetPosition>({ x: 0, y: 0 });
   const [alwaysOnTop, setAlwaysOnTop] = useState(true);
@@ -41,6 +45,7 @@ export const DashboardApp: React.FC = () => {
     // Load initial data via typed IPC
     if (window.roa) {
       window.roa.character.getActive().then(setCharacter).catch(console.error);
+      window.roa.character.list().then(setCharacters).catch(console.error);
       window.roa.settings.getAll().then((settings: AppSettings) => {
         setMood(settings['pet.currentMood']);
         setPosition(settings['pet.position']);
@@ -55,6 +60,11 @@ export const DashboardApp: React.FC = () => {
         setMood(newMood);
       });
 
+      // Listen for character changes
+      const unsubscribeChar = window.roa.character.onChanged((newChar) => {
+        setCharacter(newChar);
+      });
+
       // Poll position when dashboard is open (every 1s)
       const posInterval = setInterval(() => {
         window.roa.pet.getPosition().then(setPosition).catch(() => {});
@@ -62,11 +72,16 @@ export const DashboardApp: React.FC = () => {
 
       return () => {
         unsubscribeMood();
+        unsubscribeChar();
         clearInterval(posInterval);
       };
     }
     return undefined;
   }, []);
+
+  const handleSelectCharacter = (id: string) => {
+    window.roa?.character?.setActive?.(id).catch(console.error);
+  };
 
   const handleMoodChange = (newMood: PetMood) => {
     setMood(newMood);
@@ -191,67 +206,102 @@ export const DashboardApp: React.FC = () => {
               </p>
             </div>
 
-            {/* Companion Card */}
+            {/* Character Selector Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                  Select Companion Character
+                </h3>
+                <span className="text-xs text-zinc-500 font-mono">
+                  {characters.length} Available
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {characters.map((char) => (
+                  <CharacterCard
+                    key={char.id}
+                    character={char}
+                    isActive={character?.id === char.id}
+                    onSelect={handleSelectCharacter}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Mood & Animation Controller Card */}
             <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl p-5 shadow-sm space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-bold">
-                    🐱
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold">{character?.name ?? 'Roa Cat'}</h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {character?.description ?? 'A curious and loyal desktop companion cat.'}
-                    </p>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold">Mood & Animation State</h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Active mood for {character?.name ?? 'your pet'}. Pet will also autonomously walk and react to events.
+                  </p>
                 </div>
-                <span className="text-[11px] font-mono bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
-                  Active
+                <span className="text-[11px] font-mono bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 rounded-full capitalize">
+                  Current: {mood}
                 </span>
               </div>
 
-              {/* Mood Controller */}
-              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80">
-                <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400 block mb-2">
-                  Pet Mood & Animation State:
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => handleMoodChange('idle')}
-                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                      mood === 'idle'
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                    }`}
-                  >
-                    <Sun className="w-3.5 h-3.5" />
-                    Idle
-                  </button>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                <button
+                  onClick={() => handleMoodChange('idle')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
+                    mood === 'idle'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                  }`}
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                  Idle
+                </button>
 
-                  <button
-                    onClick={() => handleMoodChange('happy')}
-                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                      mood === 'happy'
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                    }`}
-                  >
-                    <Smile className="w-3.5 h-3.5" />
-                    Happy
-                  </button>
+                <button
+                  onClick={() => handleMoodChange('happy')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
+                    mood === 'happy'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                  }`}
+                >
+                  <Smile className="w-3.5 h-3.5" />
+                  Happy
+                </button>
 
-                  <button
-                    onClick={() => handleMoodChange('sleeping')}
-                    className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                      mood === 'sleeping'
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                    }`}
-                  >
-                    <Bed className="w-3.5 h-3.5" />
-                    Sleeping
-                  </button>
-                </div>
+                <button
+                  onClick={() => handleMoodChange('sleeping')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
+                    mood === 'sleeping'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                  }`}
+                >
+                  <Bed className="w-3.5 h-3.5" />
+                  Sleeping
+                </button>
+
+                <button
+                  onClick={() => handleMoodChange('thinking')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
+                    mood === 'thinking'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                  }`}
+                >
+                  <Brain className="w-3.5 h-3.5" />
+                  Thinking
+                </button>
+
+                <button
+                  onClick={() => handleMoodChange('celebrating')}
+                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
+                    mood === 'celebrating'
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                  }`}
+                >
+                  <PartyPopper className="w-3.5 h-3.5" />
+                  Celebrating
+                </button>
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-import { PetMood, PetPosition, CharacterManifest } from './pet';
+import { PetMood, PetBehavior, PetPosition, CharacterManifest, PetState } from './pet';
 import { AppSettings, SettingKey } from './settings';
 import {
   Reminder,
@@ -13,7 +13,11 @@ export interface ElectronRoaAPI {
     setPosition: (pos: PetPosition) => Promise<void>;
     setAlwaysOnTop: (flag: boolean) => Promise<void>;
     setMood: (mood: PetMood) => Promise<void>;
+    setBehavior: (behavior: PetBehavior) => Promise<void>;
+    getState: () => Promise<PetState>;
+    getWorkAreaBounds: () => Promise<{ x: number; y: number; width: number; height: number }>;
     onMoodChanged: (callback: (mood: PetMood) => void) => () => void;
+    onBehaviorChanged: (callback: (behavior: PetBehavior) => void) => () => void;
     onReminderFired: (callback: (reminder: Reminder) => void) => () => void;
     openContextMenu: () => Promise<void>;
   };
@@ -24,6 +28,8 @@ export interface ElectronRoaAPI {
   character: {
     getActive: () => Promise<CharacterManifest>;
     list: () => Promise<CharacterManifest[]>;
+    setActive: (id: string) => Promise<void>;
+    onChanged: (callback: (character: CharacterManifest) => void) => () => void;
   };
   reminders: {
     list: () => Promise<Reminder[]>;

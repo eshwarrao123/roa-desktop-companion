@@ -1,0 +1,16 @@
+{
+  "characters": [
+    {
+      "id": "roa-cat",
+      "name": "Roa Cat",
+      "description": "A curious and loyal desktop companion cat.",
+      "manifest": "roa-cat/manifest.json"
+    },
+    {
+      "id": "roa-bunny",
+      "name": "Roa Bunny",
+      "description": "A cheerful, bouncy desktop companion rabbit who loves reminders and focus.",
+      "manifest": "roa-bunny/manifest.json"
+    }
+  ]
+}

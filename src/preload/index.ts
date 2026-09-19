@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { ElectronRoaAPI } from '@shared/types/ipc';
-import { PetMood, PetPosition } from '@shared/types/pet';
+import { PetMood, PetBehavior, PetPosition, CharacterManifest, PetState } from '@shared/types/pet';
 import { AppSettings, SettingKey } from '@shared/types/settings';
 import {
   Reminder,
@@ -15,11 +15,22 @@ const roaApi: ElectronRoaAPI = {
     setPosition: (pos: PetPosition) => ipcRenderer.invoke('roa:pet:setPosition', pos),
     setAlwaysOnTop: (flag: boolean) => ipcRenderer.invoke('roa:pet:setAlwaysOnTop', flag),
     setMood: (mood: PetMood) => ipcRenderer.invoke('roa:pet:setMood', mood),
+    setBehavior: (behavior: PetBehavior) => ipcRenderer.invoke('roa:pet:setBehavior', behavior),
+    getState: () => ipcRenderer.invoke('roa:pet:getState'),
+    getWorkAreaBounds: () => ipcRenderer.invoke('roa:pet:getWorkAreaBounds'),
     onMoodChanged: (callback: (mood: PetMood) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, mood: PetMood) => callback(mood);
       ipcRenderer.on('roa:pet:moodChanged', handler);
       return () => {
         ipcRenderer.removeListener('roa:pet:moodChanged', handler);
+      };
+    },
+    onBehaviorChanged: (callback: (behavior: PetBehavior) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, behavior: PetBehavior) =>
+        callback(behavior);
+      ipcRenderer.on('roa:pet:behaviorChanged', handler);
+      return () => {
+        ipcRenderer.removeListener('roa:pet:behaviorChanged', handler);
       };
     },
     onReminderFired: (callback: (reminder: Reminder) => void) => {
@@ -39,6 +50,15 @@ const roaApi: ElectronRoaAPI = {
   character: {
     getActive: () => ipcRenderer.invoke('roa:character:getActive'),
     list: () => ipcRenderer.invoke('roa:character:list'),
+    setActive: (id: string) => ipcRenderer.invoke('roa:character:setActive', id),
+    onChanged: (callback: (character: CharacterManifest) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, character: CharacterManifest) =>
+        callback(character);
+      ipcRenderer.on('roa:character:changed', handler);
+      return () => {
+        ipcRenderer.removeListener('roa:character:changed', handler);
+      };
+    },
   },
   reminders: {
     list: () => ipcRenderer.invoke('roa:reminders:list'),

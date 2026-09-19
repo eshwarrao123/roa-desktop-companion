@@ -21,6 +21,11 @@ export class WindowManager {
     return this.dashboardWindow;
   }
 
+  public getPrimaryWorkArea(): { x: number; y: number; width: number; height: number } {
+    const primaryDisplay = screen.getPrimaryDisplay();
+    return primaryDisplay.workArea;
+  }
+
   public createPetWindow(): BrowserWindow {
     if (this.petWindow && !this.petWindow.isDestroyed()) {
       this.petWindow.show();

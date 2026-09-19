@@ -89,47 +89,32 @@ User launches ROA (shortcut / startup / executable)
 ### 2.2 Behavior Loop (Renderer)
 
 ```typescript
-// Simplified behavior state machine
-type PetState = 'idle' | 'walking' | 'sleeping' | 'speaking' | 'reacting';
+// Phase 3 Decoupled State Model
+export type PetMood = 'idle' | 'happy' | 'sleeping' | 'thinking' | 'reminding' | 'celebrating';
+export type PetBehavior = 'idle' | 'walking' | 'sleeping' | 'interacting';
 
-function behaviorLoop() {
-  const currentState = getCurrentState();
-  const mood = getCurrentMood();
-  const now = Date.now();
-
-  switch (currentState) {
-    case 'idle':
-      if (shouldWalk(now, mood)) {
-        startWalking(randomDirection(), randomDistance());
-      } else if (shouldSpeak(now, mood)) {
-        showSpeechBubble(getRandomIdleMessage(mood));
-      } else {
-        playAnimation('idle');
-        scheduleNextIdleCheck();
-      }
-      break;
-
-    case 'walking':
-      if (reachedDestination()) {
-        setState('idle');
-      } else {
-        updatePosition();
-      }
-      break;
-
-    case 'speaking':
-      if (speechBubbleDismissed()) {
-        setState('idle');
-      }
-      break;
-
-    case 'reacting':
-      if (animationComplete()) {
-        setState('idle');
-      }
-      break;
-  }
+interface PetState {
+  characterId: string;
+  mood: PetMood;
+  behavior: PetBehavior;
 }
+
+// Autonomous Behavior Loop (Renderer usePetBehavior hook)
+// 1. When in 'idle' behavior and mood != 'sleeping' and no active drag/reminder:
+//    - Schedules random trigger between behaviors.idleIntervalMs[0] and behaviors.idleIntervalMs[1]
+//    - Evaluates behaviors.walkProbability (e.g., 40%)
+//    - If walking chosen:
+//      * Picks random distance from behaviors.walkDistancePx
+//      * Steps 3px every 50ms (~20 FPS)
+//      * Reverses direction if hitting desktop workArea bounds (workArea.x + 10 or workArea.x + width - 210)
+//      * On completion, transitions behavior back to 'idle'
+// 2. Reminder fired:
+//    - Immediately sets mood: 'reminding', behavior: 'interacting'
+//    - Displays speech bubble with character-tailored flair
+//    - After 4s duration, automatically returns mood to 'idle' and behavior to 'idle'
+// 3. User switches character in Dashboard:
+//    - In-place hot-swap: pet renderer receives roa:character:changed
+//    - Loads new manifest & animations without recreating BrowserWindow
 ```
 
 ---

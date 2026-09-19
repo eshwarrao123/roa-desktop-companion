@@ -1,6 +1,14 @@
 import { ipcMain, Menu, BrowserWindow, app } from 'electron';
 import { z } from 'zod';
-import { PetMood, PetMoodSchema, PetPosition, PetPositionSchema } from '@shared/types/pet';
+import {
+  PetMood,
+  PetMoodSchema,
+  PetBehavior,
+  PetBehaviorSchema,
+  PetPosition,
+  PetPositionSchema,
+  PetState,
+} from '@shared/types/pet';
 import { AppSettings, SettingKey } from '@shared/types/settings';
 import {
   CreateReminderInputSchema,
@@ -26,6 +34,7 @@ export function registerIpcHandlers(
   const registry = characterRegistry ?? getCharacterRegistry();
   const engine = reminderEngine ?? getReminderEngine();
   const tray = getTrayManager(winManager, store);
+  let currentBehavior: PetBehavior = 'idle';
 
   // Pet handlers
   ipcMain.handle('roa:pet:getPosition', async (): Promise<PetPosition> => {
@@ -57,6 +66,36 @@ export function registerIpcHandlers(
       petWin.webContents.send('roa:pet:moodChanged', mood);
     }
     tray.updateContextMenu();
+  });
+
+  ipcMain.handle('roa:pet:setBehavior', async (_event, rawBehavior: unknown): Promise<void> => {
+    const behavior = PetBehaviorSchema.parse(rawBehavior);
+    currentBehavior = behavior;
+    const petWin = winManager.getPetWindow();
+    if (petWin && !petWin.isDestroyed()) {
+      petWin.webContents.send('roa:pet:behaviorChanged', behavior);
+    }
+  });
+
+  ipcMain.handle('roa:pet:getState', async (): Promise<PetState> => {
+    const petWin = winManager.getPetWindow();
+    const pos =
+      petWin && !petWin.isDestroyed()
+        ? { x: petWin.getPosition()[0], y: petWin.getPosition()[1] }
+        : store.get('pet.position');
+
+    return {
+      characterId: store.get('pet.activeCharacterId'),
+      mood: store.get('pet.currentMood'),
+      behavior: currentBehavior,
+      position: pos,
+      alwaysOnTop: store.get('pet.alwaysOnTop'),
+      visible: store.get('pet.visible'),
+    };
+  });
+
+  ipcMain.handle('roa:pet:getWorkAreaBounds', async () => {
+    return winManager.getPrimaryWorkArea();
   });
 
   ipcMain.handle('roa:pet:openContextMenu', async (event): Promise<void> => {
@@ -143,6 +182,21 @@ export function registerIpcHandlers(
 
   ipcMain.handle('roa:character:list', async () => {
     return registry.list();
+  });
+
+  ipcMain.handle('roa:character:setActive', async (_event, rawId: unknown): Promise<void> => {
+    const id = z.string().min(1).parse(rawId);
+    const character = registry.setActive(id);
+
+    // Broadcast to pet window and dashboard
+    const petWin = winManager.getPetWindow();
+    if (petWin && !petWin.isDestroyed()) {
+      petWin.webContents.send('roa:character:changed', character);
+    }
+    const dashWin = winManager.getDashboardWindow();
+    if (dashWin && !dashWin.isDestroyed()) {
+      dashWin.webContents.send('roa:character:changed', character);
+    }
   });
 
   // Reminder handlers (Zod-validated)

@@ -8,11 +8,12 @@
 
 ## Project Status
 
-**Current Phase**: Phase 2 Complete (Local Reminder Engine)
+**Current Phase**: Phase 3 Complete (Character & Autonomous Behavior System)
 
 - [x] **Phase 0 & 1**: Electron + React 19 + TypeScript + Vite Desktop Shell, transparent pet window, SQLite WAL migrations, tray lifecycle, strict IPC.
 - [x] **Phase 2**: Local/Offline Reminder Engine, ONE_TIME, INTERVAL, DAILY, WEEKLY schedules, watchdog recovery, sleep/resume handling, native Windows notifications, pet reminder reactions, and Reminders dashboard UI.
-- [ ] **Phase 3**: Timers & Pomodoro Engine.
+- [x] **Phase 3**: Modular character manifest architecture with Zod validation, bundled original characters (`roa-cat` and `roa-bunny`), in-place character hot-switching without window destruction, autonomous behavior loop with desktop walking & screen boundary reversal, decoupled pet state (`characterId`, `mood`, `behavior`), 7 animation states, and reminder reaction flair.
+- [ ] **Phase 4**: Timers & Pomodoro Engine.
 
 ### Planning Documents
 

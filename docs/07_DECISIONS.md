@@ -300,6 +300,40 @@
 
 ---
 
+### 1.17 In-Place Character Hot-Switching (Phase 3)
+
+**Decision**: Hot-swap character manifests and sprite assets in the existing pet renderer without destroying or recreating the Electron `BrowserWindow`.
+
+**Rationale**:
+- Recreating the Electron window causes visual flicker, loses position/drag states, and introduces unnecessary OS window overhead.
+- IPC event `roa:character:changed` notifies the pet renderer, which immediately loads the new character manifest and resets the animation state cleanly.
+
+**Trade-offs**:
+- The pet renderer must handle reactive character prop changes smoothly (handled via React `key` or reset effect).
+
+---
+
+### 1.18 Decoupled Character / Mood / Behavior State Model (Phase 3)
+
+**Decision**: Separate `characterId` (identity), `mood` (emotional expression), and `behavior` (movement state) rather than combining them into a single monolithic enum.
+
+**Rationale**:
+- Allows orthogonal states: a pet can be `walking` while `happy` or `idle` while `thinking`.
+- Clean deterministic behavior loop without combinatorial state explosion.
+
+---
+
+### 1.19 Low-Frequency Autonomous Desktop Walking & Usable Bounds Constraints (Phase 3)
+
+**Decision**: Autonomous pet movement executes at ~20 FPS (50ms intervals) with small 3px steps, strictly bounded by Electron's display `workArea` (excluding taskbar/dock).
+
+**Rationale**:
+- Moving the OS `BrowserWindow` at 60 FPS creates high main-process and DWM compositor overhead.
+- 50ms intervals provide smooth visual walking without CPU spikes.
+- Boundary reversal ensures the pet never walks off-screen or gets trapped behind taskbars.
+
+---
+
 ## 2. Contradictions Identified & Resolved
 
 | # | Contradiction | Resolution |

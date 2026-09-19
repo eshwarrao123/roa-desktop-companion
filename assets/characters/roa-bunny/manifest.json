@@ -1,16 +1,16 @@
 {
   "$schema": "https://roa.app/schemas/character-manifest.json",
-  "id": "roa-cat",
-  "name": "Roa Cat",
+  "id": "roa-bunny",
+  "name": "Roa Bunny",
   "version": "1.0.0",
   "author": "ROA Team",
-  "description": "A curious and loyal desktop companion cat.",
+  "description": "A cheerful, bouncy desktop companion rabbit who loves reminders and focus.",
   "preview": "preview.png",
   "personality": {
-    "playful": 0.7,
-    "calm": 0.8,
-    "curious": 0.9,
-    "sarcastic": 0.2
+    "playful": 0.9,
+    "calm": 0.5,
+    "energetic": 0.8,
+    "curious": 0.7
   },
   "animations": {
     "idle": {
@@ -34,7 +34,7 @@
     "happy": {
       "file": "happy.png",
       "frames": 4,
-      "frameRate": 6,
+      "frameRate": 7,
       "loop": true
     },
     "thinking": {
@@ -58,9 +58,9 @@
   },
   "moods": ["idle", "happy", "sleeping", "thinking", "reminding", "celebrating"],
   "behaviors": {
-    "idleIntervalMs": [5000, 15000],
-    "walkProbability": 0.35,
-    "walkDistancePx": [100, 250],
-    "speechIntervalMs": [30000, 120000]
+    "idleIntervalMs": [4000, 12000],
+    "walkProbability": 0.4,
+    "walkDistancePx": [80, 220],
+    "speechIntervalMs": [20000, 90000]
   }
 }

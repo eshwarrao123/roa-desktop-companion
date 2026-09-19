@@ -73,9 +73,43 @@ export class CharacterRegistry {
     }
   }
 
+  private changeListeners: Set<(character: CharacterManifest) => void> = new Set();
+
+  public get(id: string): CharacterManifest | null {
+    return this.characters.get(id) ?? null;
+  }
+
   public getActive(): CharacterManifest {
     const activeId = this.settingsStore.get('pet.activeCharacterId');
     return this.characters.get(activeId) ?? this.characters.values().next().value!;
+  }
+
+  public setActive(id: string): CharacterManifest {
+    const character = this.characters.get(id);
+    if (!character) {
+      throw new Error(`Character with ID "${id}" not found.`);
+    }
+
+    this.settingsStore.set('pet.activeCharacterId', id);
+    console.log(`[CharacterRegistry] Switched active character to "${character.name}" (${id})`);
+
+    // Notify listeners
+    for (const listener of this.changeListeners) {
+      try {
+        listener(character);
+      } catch (err) {
+        console.error('[CharacterRegistry] Error in change listener:', err);
+      }
+    }
+
+    return character;
+  }
+
+  public onCharacterChanged(listener: (character: CharacterManifest) => void): () => void {
+    this.changeListeners.add(listener);
+    return () => {
+      this.changeListeners.delete(listener);
+    };
   }
 
   public list(): CharacterManifest[] {

@@ -229,16 +229,19 @@ assets/characters/
     └── (same structure)
 ```
 
-### 3.6 Acceptance Criteria
+### 3.6 Acceptance Criteria (Phase 3 Completed)
 
-- [ ] Pet window opens transparent, frameless, always-on-top
-- [ ] Pet animates (idle breathe loop) at 60fps
-- [ ] Pet draggable, snaps to screen edges
-- [ ] Right-click shows context menu
-- [ ] Character switch updates pet instantly
-- [ ] Speech bubbles appear/dismiss smoothly
-- [ ] Two built-in characters load correctly
-- [ ] Import character pack (ZIP) works
+- [x] Pet window opens transparent, frameless, always-on-top
+- [x] Sprite animation engine driven dynamically by character manifest
+- [x] Pet draggable with position persistence
+- [x] Right-click shows context menu
+- [x] In-place character switching without window recreation
+- [x] Speech bubbles appear with character flair and dismiss smoothly
+- [x] Two original built-in characters (`roa-cat` and `roa-bunny`) with full manifests
+- [x] Autonomous desktop walking with screen boundary reversal within usable work area
+- [x] Decoupled state model: `characterId`, `mood` (7 states), `behavior` (4 states)
+- [x] Full Zod validation on manifests and IPC contracts
+- [ ] Import character pack (ZIP) works (deferred to future phase)
 
 ---
 

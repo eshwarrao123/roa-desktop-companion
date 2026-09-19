@@ -217,13 +217,35 @@ const TimestampSchema = z.number().int().positive();
 const JSONObjectSchema = z.record(z.unknown());
 
 // ============================================================
-// CHARACTER
+// CHARACTER & PET
 // ============================================================
+export const CharacterPersonalitySchema = z.record(z.string(), z.number().min(0).max(1));
+
+export const PetMoodSchema = z.enum([
+  'idle',
+  'happy',
+  'sleeping',
+  'thinking',
+  'reminding',
+  'celebrating',
+]);
+
+export const PetBehaviorSchema = z.enum([
+  'idle',
+  'walking',
+  'sleeping',
+  'interacting',
+]);
+
 export const AnimationSchema = z.object({
   file: z.string(),
   frames: z.number().int().positive(),
   frameRate: z.number().positive(),
   loop: z.boolean(),
+  frameSize: z.object({
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+  }).optional(),
 });
 
 export const CharacterManifestSchema = z.object({
@@ -232,22 +254,26 @@ export const CharacterManifestSchema = z.object({
   name: z.string().min(1).max(64),
   version: z.string().regex(/^\d+\.\d+\.\d+$/),
   author: z.string().max(128),
-  description: z.string().max(512).optional(),
+  description: z.string().max(512),
   preview: z.string(),
-  animations: z.record(AnimationSchema),
+  personality: CharacterPersonalitySchema.optional(),
+  animations: z.record(z.string(), AnimationSchema),
   moods: z.array(z.string()).min(1),
   behaviors: z.object({
     idleIntervalMs: z.tuple([z.number().positive(), z.number().positive()]),
     walkProbability: z.number().min(0).max(1),
     walkDistancePx: z.tuple([z.number().positive(), z.number().positive()]),
     speechIntervalMs: z.tuple([z.number().positive(), z.number().positive()]),
-  }),
+  }).optional(),
   assets: z.object({
     spritesheet: z.string().optional(),
     atlas: z.string().optional(),
   }).optional(),
 });
 
+export type CharacterPersonality = z.infer<typeof CharacterPersonalitySchema>;
+export type PetMood = z.infer<typeof PetMoodSchema>;
+export type PetBehavior = z.infer<typeof PetBehaviorSchema>;
 export type CharacterManifest = z.infer<typeof CharacterManifestSchema>;
 
 // ============================================================
