@@ -428,15 +428,21 @@ export function useReminders() {
 - onPowerResume(): void (watchdog catch-up)
 ```
 
-### 6.4 Acceptance Criteria
+### 6.4 Acceptance Criteria (Phase 4 Completed)
 
-- [ ] Tray icon visible with correct tooltip
-- [ ] Tray menu shows next reminder, active timer
-- [ ] Windows toast notifications work (action buttons)
-- [ ] Pet speech bubble notifications work
-- [ ] Launch at login toggle works
-- [ ] Sleep/resume handled gracefully
-- [ ] Battery status readable (for pet behavior)
+- [x] Countdown timers work offline with persisted `ends_at` as authoritative state
+- [x] Pomodoro focus engine with cycle progression (25m Focus / 5m Short Break / 15m Long Break after 4 sessions)
+- [x] Timer persistence and recovery across system sleep/resume and application restarts
+- [x] Native Windows timer completion notifications (works even with dashboard closed)
+- [x] Pet reactions to timer & system events (`focusStarted`, `breakStarted`, `timerCompleted`, `lowBattery`, `systemIdle`)
+- [x] Start with Windows can be toggled and persisted via `app.setLoginItemSettings`
+- [x] Global shortcut (`Ctrl+Shift+Space`) toggles/focuses dashboard
+- [x] Local battery awareness with low-battery spam suppression
+- [x] Optional idle awareness with pet sleeping reaction
+- [x] Pet click-through mode via mouse events forwarding
+- [x] Enhanced tray menu with Timer, Pomodoro, and Pet Mode options
+- [x] Dedicated Timers & Pomodoro dashboard UI with live countdown, cycle dots, and presets
+- [x] Focused unit tests for timer engine and system service
 
 ---
 
@@ -492,15 +498,18 @@ const tools = [
 - Provider status indicator
 ```
 
-### 7.5 Acceptance Criteria
+### 7.5 Acceptance Criteria (Phase 5 Completed)
 
-- [ ] Gemini BYOK: key stored securely, not in SQLite
-- [ ] Ollama: detects local instance, lists models
-- [ ] Tool calling works: AI → tool → result → AI response
-- [ ] Allowlist enforced: unknown tools rejected
-- [ ] Zod validation: malformed args rejected
-- [ ] DisabledProvider: graceful "AI unavailable" messages
-- [ ] Chat UI: streaming, tool visualization, history
+- [x] Gemini BYOK: key stored securely via `safeStorage` (Windows DPAPI), never exposed to renderer or SQLite
+- [x] Official `@google/genai` (v2.3+) SDK used with `gemini-3.8-flash` default model
+- [x] Tool calling works: Gemini → tool allowlist → Zod validation → main execution → result → Gemini response
+- [x] All 10 safe application tools implemented (reminders, timers, system, time, today summary)
+- [x] Allowlist strictly enforced: unknown tools rejected
+- [x] Zod validation: malformed arguments rejected before execution
+- [x] DisabledProvider: graceful offline degradation messages
+- [x] Chat UI: message history, quick prompts, tool activity pills, clear chat
+- [x] Pet reactions to AI thinking and completion states
+- [ ] Ollama: local instance integration (deferred to future phase)
 
 ---
 

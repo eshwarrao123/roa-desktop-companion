@@ -67,10 +67,70 @@ export const PetApp: React.FC = () => {
       }, 8000);
     });
 
+    // 6. Subscribe to timer and system events (Phase 4)
+    const unsubscribeTimer = window.roa?.pet?.onTimerEvent?.((event) => {
+      stopWalking();
+      let nextMood: PetMood = 'idle';
+      let autoDismissMs = 4000;
+
+      switch (event.type) {
+        case 'timerStarted':
+        case 'focusStarted':
+        case 'aiThinking':
+          nextMood = 'thinking';
+          break;
+        case 'breakStarted':
+          nextMood = 'happy';
+          break;
+        case 'timerCompleted':
+        case 'focusCompleted':
+        case 'aiComplete':
+          nextMood = 'celebrating';
+          autoDismissMs = 5000;
+          break;
+        case 'lowBattery':
+        case 'systemIdle':
+          nextMood = 'sleeping';
+          autoDismissMs = 6000;
+          break;
+        case 'systemActive':
+          nextMood = 'idle';
+          autoDismissMs = 3000;
+          break;
+      }
+
+      setMood(nextMood);
+      setActiveReminder({
+        id: 'system-timer-event',
+        title: event.message || event.title,
+        description: '',
+        schedule_type: 'one_time',
+        schedule_data: { targetTimestamp: Date.now() },
+        timezone: 'local',
+        enabled: true,
+        next_run_at: Date.now(),
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      });
+
+      setTimeout(() => {
+        setActiveReminder((current) => {
+          if (current?.id === 'system-timer-event') {
+            if (event.type !== 'systemIdle') {
+              setMood('idle');
+            }
+            return null;
+          }
+          return current;
+        });
+      }, autoDismissMs);
+    });
+
     return () => {
       unsubscribeChar?.();
       unsubscribeMood?.();
       unsubscribeReminder?.();
+      unsubscribeTimer?.();
     };
   }, [stopWalking]);
 

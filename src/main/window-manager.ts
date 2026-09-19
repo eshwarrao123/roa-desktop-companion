@@ -73,6 +73,10 @@ export class WindowManager {
 
     this.applySecurityPolicy(this.petWindow);
 
+    if (this.settingsStore.get('pet.clickThrough')) {
+      this.petWindow.setIgnoreMouseEvents(true, { forward: true });
+    }
+
     // Save position on move (debounced)
     this.petWindow.on('move', () => {
       if (!this.petWindow) return;
@@ -187,6 +191,12 @@ export class WindowManager {
     if (!this.petWindow || this.petWindow.isDestroyed()) return;
     this.petWindow.setAlwaysOnTop(flag);
     this.settingsStore.set('pet.alwaysOnTop', flag);
+  }
+
+  public setPetClickThrough(enabled: boolean): void {
+    if (!this.petWindow || this.petWindow.isDestroyed()) return;
+    this.petWindow.setIgnoreMouseEvents(enabled, { forward: true });
+    this.settingsStore.set('pet.clickThrough', enabled);
   }
 
   private applySecurityPolicy(win: BrowserWindow): void {

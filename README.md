@@ -8,12 +8,13 @@
 
 ## Project Status
 
-**Current Phase**: Phase 3 Complete (Character & Autonomous Behavior System)
+**Current Phase**: Phase 5 Complete (Gemini BYOK, AI Assistant, and Safe Tool Calling)
 
 - [x] **Phase 0 & 1**: Electron + React 19 + TypeScript + Vite Desktop Shell, transparent pet window, SQLite WAL migrations, tray lifecycle, strict IPC.
 - [x] **Phase 2**: Local/Offline Reminder Engine, ONE_TIME, INTERVAL, DAILY, WEEKLY schedules, watchdog recovery, sleep/resume handling, native Windows notifications, pet reminder reactions, and Reminders dashboard UI.
 - [x] **Phase 3**: Modular character manifest architecture with Zod validation, bundled original characters (`roa-cat` and `roa-bunny`), in-place character hot-switching without window destruction, autonomous behavior loop with desktop walking & screen boundary reversal, decoupled pet state (`characterId`, `mood`, `behavior`), 7 animation states, and reminder reaction flair.
-- [ ] **Phase 4**: Timers & Pomodoro Engine.
+- [x] **Phase 4**: Local countdown timers, Pomodoro focus engine with cycle progression, timer persistence & recovery across sleep/restart, native timer notifications, Windows startup integration, global shortcut (`Ctrl+Shift+Space`), battery awareness with low-battery spam suppression, optional idle awareness, pet click-through mode, tray enhancements, and dedicated Timers dashboard UI.
+- [x] **Phase 5**: AI Assistant (Gemini BYOK using official `@google/genai` SDK, OS credential encryption with Electron `safeStorage`, 10 safe allowlisted application tools with Zod validation, conversation persistence, interactive Chat UI, Settings configuration with masked credentials, and pet reactions).
 
 ### Planning Documents
 

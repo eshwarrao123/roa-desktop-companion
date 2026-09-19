@@ -575,9 +575,120 @@ AI Request → Provider.sendMessage()
 | Flow | Storage Layer | Verification |
 |------|---------------|--------------|
 | Reminders | SQLite (WAL mode) | `next_run_at` index query |
-| Timers | SQLite + In-memory | Drift < 50ms |
+| Timers | SQLite (WAL mode) + In-memory timer registry | `ends_at` persisted; sleep/resume reconciliation |
 | Characters | Filesystem (assets/) | Manifest Zod schema |
 | Settings | SQLite (JSON values) | Schema validation |
 | AI Config | safeStorage + SQLite metadata | IPC query |
 | Window Pos | SQLite settings | Boundary clamp check |
 | Pet Animation State | Renderer Memory | Local only (ephemeral) |
+
+---
+
+## 12. Phase 4: Timer & System Service Flows
+
+### 12.1 Timer & Pomodoro Engine Lifecycle
+
+```
+User (Dashboard / Tray)
+         │
+         ▼
+┌────────────────────────────────────────────┐
+│ TimerEngine (Main Process)                 │
+│ 1. Receives start/pause/resume/cancel      │
+│ 2. Computes ends_at = Date.now() + remMs   │
+│ 3. Writes authoritative state to SQLite    │
+│ 4. Registers in-memory execution timeout   │
+│ 5. Broadcasts state update via IPC         │
+└────────────────────────────────────────────┘
+         │
+         ├────────────────────────────────────────┐
+         ▼                                        ▼
+┌────────────────────────────────┐       ┌────────────────────────────────┐
+│ System Sleep / Resume Event    │       │ Timeout Fires (Completion)     │
+│ 1. Clear stale memory timeouts │       │ 1. Mark 'completed' in SQLite  │
+│ 2. Query running from SQLite   │       │ 2. Advance Pomodoro phase:     │
+│ 3. If ends_at <= Date.now():   │       │    focus (4x) -> short/long brk│
+│    trigger completion          │       │ 3. Native Windows notification │
+│ 4. Else: reschedule timeout    │       │ 4. Emit pet reaction           │
+└────────────────────────────────┘       └────────────────────────────────┘
+```
+
+### 12.2 System Service Flow (Battery, Idle, Startup, Global Shortcut)
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ SystemService (Main Process)                                           │
+│                                                                        │
+│ • Global Shortcut: Ctrl+Shift+Space -> show/focus Dashboard Window     │
+│ • Startup Integration: app.setLoginItemSettings({ openAtLogin })       │
+│ • Battery Awareness:                                                   │
+│   - powerMonitor on-battery / on-ac                                    │
+│   - Windows CIM command for exact battery percentage                   │
+│   - Low-battery spam suppression: trigger once <= 20% on battery       │
+│ • Idle Detection:                                                      │
+│   - powerMonitor.getSystemIdleTime() polled every 10s                  │
+│   - If idle >= threshold: emit 'systemIdle' (pet sleep)                │
+│   - When active again: emit 'systemActive' (pet awake)                 │
+│ • Pet Click-Through:                                                   │
+│   - setIgnoreMouseEvents(enabled, { forward: true })                   │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 13. Phase 5: AI Assistant & Safe Tool Calling Flow
+
+### 13.1 BYOK Credential & Provider Pipeline
+
+```
+User (Settings Tab)
+         │  (Enters Gemini API Key)
+         ▼
+┌────────────────────────────────────────────┐
+│ Main Process (safeStorage DPAPI)           │
+│ 1. Validate non-empty string               │
+│ 2. Encrypt via safeStorage.encryptString() │
+│ 3. Save to userData/credentials.enc        │
+│ 4. Run minimal test call to Gemini API     │
+│ 5. Return masked key (••••••••••••abcd)    │
+└────────────────────────────────────────────┘
+```
+
+### 13.2 Tool Calling & Multi-Turn Chat Flow
+
+```
+User: "Remind me to drink water in 30 minutes"
+         │
+         ▼
+┌────────────────────────────────────────────┐
+│ AIService & GeminiProvider                 │
+│ 1. Injects active character system prompt  │
+│ 2. Sends prompt + allowlisted tools to     │
+│    Google GenAI interactions.create()      │
+│ 3. Emits 'aiThinking' -> pet mood thinking │
+└────────────────────────────────────────────┘
+         │
+         ▼
+┌────────────────────────────────────────────┐
+│ Gemini returns function_call step          │
+│ name: 'create_reminder'                    │
+│ args: { title: "Drink water", ... }        │
+└────────────────────────────────────────────┘
+         │
+         ▼
+┌────────────────────────────────────────────┐
+│ ToolRegistry Execution                     │
+│ 1. Allowlist verification                  │
+│ 2. Strict Zod schema validation            │
+│ 3. Execute in ReminderEngine               │
+│ 4. Emit roa:ai:toolActivity to Renderer    │
+└────────────────────────────────────────────┘
+         │
+         ▼
+┌────────────────────────────────────────────┐
+│ Send function_result back to Gemini        │
+│ • Returns natural response text            │
+│ • Emits 'aiComplete' -> pet celebrating    │
+│ • Persists messages in SQLite ai_messages  │
+└────────────────────────────────────────────┘
+```

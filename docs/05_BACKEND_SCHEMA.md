@@ -87,22 +87,28 @@ CREATE INDEX idx_reminder_history_reminder ON reminder_history(reminder_id);
 CREATE INDEX idx_reminder_history_triggered ON reminder_history(triggered_at);
 
 -- ============================================================
--- TIMERS
+-- TIMERS (Upgraded in Phase 4 / Migration 3)
 -- ============================================================
 CREATE TABLE timers (
   id TEXT PRIMARY KEY,                    -- UUID v4
-  name TEXT NOT NULL,                     -- User-defined name
-  duration_ms INTEGER NOT NULL,           -- Original duration
-  remaining_ms INTEGER NOT NULL,          -- Current remaining (updated on pause/stop)
-  status TEXT NOT NULL                    -- 'running' | 'paused' | 'completed' | 'cancelled'
-    CHECK (status IN ('running', 'paused', 'completed', 'cancelled')),
-  is_pomodoro INTEGER DEFAULT 0,          -- 1 = Pomodoro session
-  pomodoro_config_json TEXT,              -- { workMs, breakMs, cycles, currentCycle, phase }
+  label TEXT NOT NULL,                    -- Timer label / title
+  type TEXT NOT NULL                      -- 'countdown' | 'pomodoro'
+    CHECK (type IN ('countdown', 'pomodoro')),
+  duration_ms INTEGER NOT NULL,           -- Total duration in ms
+  started_at INTEGER,                     -- Timestamp when started
+  ends_at INTEGER,                        -- Authoritative completion timestamp
+  remaining_ms INTEGER NOT NULL,          -- Remaining duration in ms (paused)
+  state TEXT NOT NULL                     -- 'idle' | 'running' | 'paused' | 'completed' | 'cancelled'
+    CHECK (state IN ('idle', 'running', 'paused', 'completed', 'cancelled')),
+  pomodoro_phase TEXT                     -- 'focus' | 'short_break' | 'long_break'
+    CHECK (pomodoro_phase IN ('focus', 'short_break', 'long_break')),
+  pomodoro_cycle INTEGER DEFAULT 0,       -- Completed cycles count
   created_at INTEGER NOT NULL,            -- Unix timestamp (ms)
   updated_at INTEGER NOT NULL             -- Unix timestamp (ms)
 );
 
-CREATE INDEX idx_timers_status ON timers(status);
+CREATE INDEX idx_timers_state ON timers(state);
+CREATE INDEX idx_timers_ends_at ON timers(ends_at) WHERE state = 'running';
 
 -- ============================================================
 -- SETTINGS (Key-Value with JSON values)
@@ -114,13 +120,40 @@ CREATE TABLE settings (
 );
 
 -- ============================================================
+-- AI CONVERSATIONS & MESSAGES (Phase 5)
+-- ============================================================
+CREATE TABLE ai_conversations (
+  id TEXT PRIMARY KEY,                    -- e.g. 'default-conversation'
+  title TEXT NOT NULL,                    -- Conversation title
+  created_at INTEGER NOT NULL,            -- Unix timestamp (ms)
+  updated_at INTEGER NOT NULL             -- Unix timestamp (ms)
+);
+
+CREATE TABLE ai_messages (
+  id TEXT PRIMARY KEY,                    -- UUID / unique msg id
+  conversation_id TEXT NOT NULL,          -- FK -> ai_conversations(id)
+  role TEXT NOT NULL                      -- 'user' | 'assistant' | 'system'
+    CHECK (role IN ('user', 'assistant', 'system')),
+  content TEXT NOT NULL,                  -- Message text
+  tool_calls_json TEXT,                   -- JSON array of function_call steps
+  tool_results_json TEXT,                 -- JSON array of function_result steps
+  created_at INTEGER NOT NULL,            -- Unix timestamp (ms)
+  FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_ai_messages_conv ON ai_messages(conversation_id);
+CREATE INDEX idx_ai_messages_created ON ai_messages(created_at);
+
+-- ============================================================
 -- AI PROVIDER METADATA
 -- ============================================================
 CREATE TABLE ai_provider_metadata (
   provider_id TEXT PRIMARY KEY,           -- 'gemini' | 'ollama' | 'disabled'
   is_configured INTEGER DEFAULT 0,        -- 1 = credentials present
-  model TEXT,                             -- Active model name
+  model TEXT,                             -- Active model name (e.g. 'gemini-3.8-flash')
   base_url TEXT,                          -- For Ollama
+  last_tested_at INTEGER,                 -- Timestamp of last connection test
+  last_error_category TEXT,               -- 'invalid_credential' | 'rate_limited' | 'offline'
   updated_at INTEGER NOT NULL             -- Unix timestamp (ms)
 );
 
@@ -329,77 +362,68 @@ export const ReminderHistorySchema = z.object({
 });
 
 // ============================================================
-// TIMERS
+// TIMERS (Phase 4 Local Timer & Pomodoro Engine)
 // ============================================================
-export const TimerStatusSchema = z.enum(['running', 'paused', 'completed', 'cancelled']);
-
-export const PomodoroConfigSchema = z.object({
-  workMs: z.number().positive(),
-  breakMs: z.number().positive(),
-  cycles: z.number().int().positive(),
-  currentCycle: z.number().int().nonnegative(),
-  phase: z.enum(['work', 'break']),
-});
+export const TimerTypeSchema = z.enum(['countdown', 'pomodoro']);
+export const TimerStateSchema = z.enum(['idle', 'running', 'paused', 'completed', 'cancelled']);
+export const PomodoroPhaseSchema = z.enum(['focus', 'short_break', 'long_break']);
 
 export const TimerSchema = z.object({
   id: UUIDSchema,
-  name: z.string().min(1).max(64),
+  label: z.string().min(1).max(128),
+  type: TimerTypeSchema,
   duration_ms: z.number().positive(),
+  started_at: TimestampSchema.nullable(),
+  ends_at: TimestampSchema.nullable(),
   remaining_ms: z.number().nonnegative(),
-  status: TimerStatusSchema,
-  is_pomodoro: z.boolean().default(false),
-  pomodoro_config_json: PomodoroConfigSchema.optional(),
+  state: TimerStateSchema,
+  pomodoro_phase: PomodoroPhaseSchema.nullable(),
+  pomodoro_cycle: z.number().int().nonnegative().default(0),
   created_at: TimestampSchema,
   updated_at: TimestampSchema,
 });
 
-export const StartTimerInputSchema = z.object({
-  name: z.string().min(1).max(64),
+export const CreateTimerInputSchema = z.object({
+  label: z.string().min(1).max(128).default('Timer'),
   duration_ms: z.number().positive(),
-  is_pomodoro: z.boolean().default(false),
-  pomodoro_config: PomodoroConfigSchema.optional(),
+  type: TimerTypeSchema.default('countdown'),
+});
+
+export const StartPomodoroInputSchema = z.object({
+  phase: PomodoroPhaseSchema.default('focus'),
+  cycle: z.number().int().nonnegative().default(0),
 });
 
 // ============================================================
 // SETTINGS
 // ============================================================
 export const SettingsSchema = z.object({
-  // General
-  'general.launchAtLogin': z.boolean().default(false),
-  'general.language': z.string().default('en'),
-  'general.theme': z.enum(['system', 'light', 'dark']).default('system'),
-  
+  // App
+  'app.startWithWindows': z.boolean().default(false),
+  'app.theme': z.enum(['system', 'light', 'dark']).default('system'),
+
   // Pet Window
   'pet.alwaysOnTop': z.boolean().default(true),
   'pet.clickThrough': z.boolean().default(false),
-  'pet.position': z.union([
-    z.object({ x: z.number(), y: z.number() }),
-    z.literal('auto'),
-  ]).default('auto'),
-  'pet.behaviorIntensity': z.enum(['low', 'medium', 'high']).default('medium'),
-  'pet.muteSounds': z.boolean().default(false),
-  'pet.activeCharacterId': z.string().optional(),
-  
+  'pet.activeCharacterId': z.string().default('poyo'),
+  'pet.characterId': z.string().default('poyo'),
+  'pet.soundEnabled': z.boolean().default(true),
+
   // Reminders
   'reminders.defaultSnoozeMinutes': z.number().int().positive().default(10),
-  'reminders.notificationSound': z.string().default('default'),
-  'reminders.showInPetWindow': z.boolean().default(true),
-  
-  // Timers
-  'timers.pomodoroWorkMinutes': z.number().int().positive().default(25),
-  'timers.pomodoroBreakMinutes': z.number().int().positive().default(5),
-  'timers.pomodoroCycles': z.number().int().positive().default(4),
-  'timers.timerSound': z.string().default('default'),
-  
-  // AI
-  'ai.enabled': z.boolean().default(false),
-  'ai.provider': z.enum(['gemini', 'ollama', 'disabled']).default('disabled'),
-  'ai.geminiModel': z.string().default('gemini-1.5-flash'),
-  'ai.ollamaBaseUrl': z.string().url().default('http://localhost:11434'),
-  
-  // Advanced
-  'advanced.debugMode': z.boolean().default(false),
-  'advanced.logLevel': z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+  'reminders.soundEnabled': z.boolean().default(true),
+
+  // Pomodoro
+  'pomodoro.focusDurationMs': z.number().int().positive().default(25 * 60 * 1000),
+  'pomodoro.shortBreakDurationMs': z.number().int().positive().default(5 * 60 * 1000),
+  'pomodoro.longBreakDurationMs': z.number().int().positive().default(15 * 60 * 1000),
+  'pomodoro.longBreakInterval': z.number().int().positive().default(4),
+
+  // System
+  'system.lowBatteryNotification': z.boolean().default(true),
+  'system.lowBatteryThreshold': z.number().int().min(5).max(50).default(20),
+  'system.idleReaction': z.boolean().default(false),
+  'system.idleThresholdSeconds': z.number().int().min(30).default(300),
 });
 
 export type Settings = z.infer<typeof SettingsSchema>;

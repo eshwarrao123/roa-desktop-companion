@@ -334,6 +334,108 @@
 
 ---
 
+### 1.20 Persisted ends_at as Authoritative Timer State & In-Memory Timeout Execution (Phase 4)
+
+**Decision**: Persist `ends_at` timestamp in SQLite as the authoritative state for running timers. The renderer calculates remaining countdown locally via `ends_at - Date.now()` instead of polling the main process.
+
+**Rationale**:
+- Eliminates timer drift across application restarts or system sleep.
+- Prevents 60 FPS IPC polling between renderer and main process.
+- Main process is solely responsible for scheduling the completion timeout and firing notifications.
+
+---
+
+### 1.21 Unified TimerEngine for Both Countdown and Pomodoro (Phase 4)
+
+**Decision**: Build the Pomodoro focus state machine directly on top of the same `TimerEngine` rather than creating a separate engine.
+
+**Rationale**:
+- Adheres to YAGNI and prevents duplicate timer persistence, timeout management, and recovery code.
+- Pomodoro phases (Focus, Short Break, Long Break) and cycle counts are represented as first-class fields on the active timer entity.
+
+---
+
+### 1.22 Low-Battery Notification Suppression & Narrow OS Query (Phase 4)
+
+**Decision**: Query Windows battery level using a fixed internal PowerShell CIM query (`Get-CimInstance -ClassName Win32_Battery`) with strict output parsing. Once alerted below the threshold (default 20%), further alerts are suppressed until AC is connected or battery recovers.
+
+**Rationale**:
+- Completely prevents notification spam while running on low battery.
+- No generic shell execution facility is exposed to renderer or AI tools.
+- Gracefully handles desktops without a battery by returning `percent: null`.
+
+---
+
+### 1.23 Privacy-Preserving Idle Detection (Phase 4)
+
+**Decision**: Idle awareness exclusively relies on `powerMonitor.getSystemIdleTime()` without tracking keystrokes, active window titles, or clipboard contents.
+
+**Rationale**:
+- Preserves complete user privacy while enabling delightful ambient pet behavior (e.g. napping when user is away).
+- User can toggle idle reactions on or off anytime via settings.
+
+---
+
+### 1.24 Click-Through Mode via Electron Mouse Events Forwarding (Phase 4)
+
+**Decision**: Implement pet click-through using `win.setIgnoreMouseEvents(enabled, { forward: true })`.
+
+**Rationale**:
+- Provides native Windows mouse event pass-through to desktop applications below transparent areas.
+- Simple, reliable toggle without heavy native hook injection.
+
+---
+
+### 1.25 Official @google/genai (v2.3+) SDK & Gemini Model Selection (Phase 5)
+
+**Decision**: Use the official `@google/genai` (v2.3+) SDK with `gemini-3.8-flash` as default model, supporting `gemini-3.5-flash-lite` and `gemini-3.1-pro-preview`. Legacy models (`gemini-1.5-*`, `gemini-2.0-*`) are strictly excluded.
+
+**Rationale**:
+- `@google/genai` is Google's current unified SDK supporting modern interaction and function calling APIs.
+- `gemini-3.8-flash` offers fast, balanced performance for agentic tool execution with a 1M token window.
+
+---
+
+### 1.26 Zero-Leak Credential Architecture via Electron safeStorage (Phase 5)
+
+**Decision**: User-provided Gemini API keys are encrypted in the Electron main process using `safeStorage` (Windows DPAPI) and stored in `credentials.enc`. The plaintext key is never exposed to the renderer, React state, logs, or SQLite.
+
+**Rationale**:
+- Maximum security: even if the renderer process is compromised, the raw API key cannot be exfiltrated.
+- The UI only ever displays masked representations (`••••••••••••abcd`).
+
+---
+
+### 1.27 Safe Tool Calling Pipeline & Strict Zod Allowlisting (Phase 5)
+
+**Decision**: The model cannot execute code directly. Tool calls from Gemini must pass through an allowlist registry, undergo strict Zod schema validation, and execute in the main process against existing Reminder, Timer, and System services.
+
+**Rationale**:
+- Prevents prompt injection or arbitrary system access (e.g. no shell execution, no arbitrary file access).
+- Reuses existing tested business logic directly without creating duplicate engines.
+
+---
+
+### 1.28 Provider Abstraction & Offline Degradation (Phase 5)
+
+**Decision**: Implement `AIProvider` interface with `GeminiProvider` and `DisabledProvider`.
+
+**Rationale**:
+- Extensible architecture: local Ollama or future providers can be added without altering the UI or consumers.
+- When AI is unconfigured or disabled, `DisabledProvider` provides helpful guidance directing users to local Reminders/Timers without breaking the application.
+
+---
+
+### 1.29 Local Conversation Persistence in SQLite (Phase 5)
+
+**Decision**: Persist conversation history in `ai_conversations` and `ai_messages` SQLite tables.
+
+**Rationale**:
+- Maintains multi-turn context across sessions locally.
+- Allows users to clear conversation history anytime with one click.
+
+---
+
 ## 2. Contradictions Identified & Resolved
 
 | # | Contradiction | Resolution |

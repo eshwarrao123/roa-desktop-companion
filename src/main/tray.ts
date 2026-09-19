@@ -38,18 +38,48 @@ export class TrayManager {
 
     const currentMood = this.settingsStore.get('pet.currentMood');
 
+    const isVisible = this.settingsStore.get('pet.visible');
+    const isClickThrough = this.settingsStore.get('pet.clickThrough');
+
     const contextMenu = Menu.buildFromTemplate([
       {
         label: 'Open ROA',
         click: () => this.windowManager.showDashboard(),
       },
+      { type: 'separator' },
       {
-        label: 'Show Pet',
-        click: () => this.windowManager.showPet(),
-      },
-      {
-        label: 'Hide Pet',
-        click: () => this.windowManager.hidePet(),
+        label: 'Pet Mode',
+        submenu: [
+          {
+            label: 'Normal',
+            type: 'radio',
+            checked: isVisible && !isClickThrough,
+            click: () => {
+              this.windowManager.showPet();
+              this.windowManager.setPetClickThrough(false);
+              this.updateContextMenu();
+            },
+          },
+          {
+            label: 'Click-Through',
+            type: 'radio',
+            checked: isVisible && isClickThrough,
+            click: () => {
+              this.windowManager.showPet();
+              this.windowManager.setPetClickThrough(true);
+              this.updateContextMenu();
+            },
+          },
+          {
+            label: 'Hidden',
+            type: 'radio',
+            checked: !isVisible,
+            click: () => {
+              this.windowManager.hidePet();
+              this.updateContextMenu();
+            },
+          },
+        ],
       },
       {
         label: 'Pet Mood',
@@ -71,6 +101,53 @@ export class TrayManager {
             type: 'radio',
             checked: currentMood === 'sleeping',
             click: () => this.setMood('sleeping'),
+          },
+        ],
+      },
+      { type: 'separator' },
+      {
+        label: 'Pomodoro',
+        submenu: [
+          {
+            label: 'Start Focus (25m)',
+            click: () => {
+              // Lazy import to avoid circular dependency
+              import('./services/timer-engine').then(({ getTimerEngine }) => {
+                getTimerEngine().startPomodoro('focus');
+              });
+            },
+          },
+          {
+            label: 'Start Short Break (5m)',
+            click: () => {
+              import('./services/timer-engine').then(({ getTimerEngine }) => {
+                getTimerEngine().startPomodoro('short_break');
+              });
+            },
+          },
+          {
+            label: 'Start Long Break (15m)',
+            click: () => {
+              import('./services/timer-engine').then(({ getTimerEngine }) => {
+                getTimerEngine().startPomodoro('long_break');
+              });
+            },
+          },
+          {
+            label: 'Pause / Resume',
+            click: () => {
+              import('./services/timer-engine').then(({ getTimerEngine }) => {
+                const engine = getTimerEngine();
+                const state = engine.getPomodoroState();
+                if (state.activeTimer?.state === 'running') {
+                  engine.pausePomodoro();
+                } else if (state.activeTimer?.state === 'paused') {
+                  engine.resumePomodoro();
+                } else {
+                  engine.startPomodoro();
+                }
+              });
+            },
           },
         ],
       },

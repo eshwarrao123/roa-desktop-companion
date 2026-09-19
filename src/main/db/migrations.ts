@@ -161,6 +161,103 @@ export const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 3,
+    description: 'Phase 4: Upgrade timers table for countdown, Pomodoro, and recovery',
+    up: (db: Database.Database) => {
+      db.exec(`
+        -- Create upgraded timers table
+        CREATE TABLE IF NOT EXISTS timers_v2 (
+          id TEXT PRIMARY KEY,
+          label TEXT NOT NULL,
+          type TEXT NOT NULL CHECK (type IN ('countdown', 'pomodoro')),
+          duration_ms INTEGER NOT NULL,
+          started_at INTEGER,
+          ends_at INTEGER,
+          remaining_ms INTEGER NOT NULL,
+          state TEXT NOT NULL CHECK (state IN ('idle', 'running', 'paused', 'completed', 'cancelled')),
+          pomodoro_phase TEXT CHECK (pomodoro_phase IN ('focus', 'short_break', 'long_break')),
+          pomodoro_cycle INTEGER DEFAULT 0,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+
+        -- If older timers table exists, copy data
+        INSERT INTO timers_v2 (id, label, type, duration_ms, started_at, ends_at, remaining_ms, state, pomodoro_phase, pomodoro_cycle, created_at, updated_at)
+        SELECT
+          id,
+          name,
+          CASE WHEN is_pomodoro = 1 THEN 'pomodoro' ELSE 'countdown' END,
+          duration_ms,
+          NULL,
+          NULL,
+          remaining_ms,
+          CASE
+            WHEN status = 'running' THEN 'running'
+            WHEN status = 'paused' THEN 'paused'
+            WHEN status = 'completed' THEN 'completed'
+            ELSE 'cancelled'
+          END,
+          CASE WHEN is_pomodoro = 1 THEN 'focus' ELSE NULL END,
+          0,
+          created_at,
+          updated_at
+        FROM timers;
+
+        DROP TABLE timers;
+        ALTER TABLE timers_v2 RENAME TO timers;
+
+        CREATE INDEX IF NOT EXISTS idx_timers_state ON timers(state);
+        CREATE INDEX IF NOT EXISTS idx_timers_ends_at ON timers(ends_at) WHERE state = 'running';
+      `);
+    },
+  },
+  {
+    version: 4,
+    description: 'Phase 5: AI conversations, messages, and provider metadata',
+    up: (db: Database.Database) => {
+      db.exec(`
+        -- AI Conversations
+        CREATE TABLE IF NOT EXISTS ai_conversations (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL
+        );
+
+        -- AI Messages
+        CREATE TABLE IF NOT EXISTS ai_messages (
+          id TEXT PRIMARY KEY,
+          conversation_id TEXT NOT NULL,
+          role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+          content TEXT NOT NULL,
+          tool_calls_json TEXT,
+          tool_results_json TEXT,
+          created_at INTEGER NOT NULL,
+          FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_ai_messages_conv ON ai_messages(conversation_id);
+        CREATE INDEX IF NOT EXISTS idx_ai_messages_created ON ai_messages(created_at);
+
+        -- Ensure ai_provider_metadata has updated columns
+        CREATE TABLE IF NOT EXISTS ai_provider_metadata_v2 (
+          provider_id TEXT PRIMARY KEY,
+          is_configured INTEGER DEFAULT 0,
+          model TEXT,
+          base_url TEXT,
+          last_tested_at INTEGER,
+          last_error_category TEXT,
+          updated_at INTEGER NOT NULL
+        );
+
+        INSERT INTO ai_provider_metadata_v2 (provider_id, is_configured, model, base_url, updated_at)
+        SELECT provider_id, is_configured, model, base_url, updated_at FROM ai_provider_metadata;
+
+        DROP TABLE ai_provider_metadata;
+        ALTER TABLE ai_provider_metadata_v2 RENAME TO ai_provider_metadata;
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

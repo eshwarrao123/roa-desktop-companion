@@ -6,6 +6,9 @@ import { getWindowManager } from './window-manager';
 import { getTrayManager } from './tray';
 import { registerIpcHandlers } from './ipc/handlers';
 import { getReminderEngine } from './services/reminder-engine';
+import { getTimerEngine } from './services/timer-engine';
+import { getSystemService } from './services/system-service';
+import { getAIService } from './services/ai/ai-service';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // Enforce single instance lock
@@ -41,26 +44,54 @@ if (!gotTheLock) {
     const reminderEngine = getReminderEngine(undefined, undefined, windowManager);
     reminderEngine.init();
 
-    // 5. Initialize Tray
+    // 5. Initialize Timer & Pomodoro Engine (Phase 4)
+    const timerEngine = getTimerEngine(undefined, windowManager, settingsStore);
+    timerEngine.init();
+
+    // 6. Initialize System Service (Startup, Shortcut, Battery, Idle) (Phase 4)
+    const systemService = getSystemService(windowManager, settingsStore);
+    systemService.init();
+
+    // 7. Initialize Tray
     const trayManager = getTrayManager(windowManager, settingsStore);
     trayManager.init();
 
-    // 6. Register IPC Handlers
-    registerIpcHandlers(windowManager, settingsStore, characterRegistry, reminderEngine);
+    // 8. Initialize AI Service (Phase 5)
+    const aiService = getAIService(
+      settingsStore,
+      characterRegistry,
+      reminderEngine,
+      timerEngine,
+      systemService,
+      windowManager
+    );
 
-    // 7. Launch Pet Window if visible setting is true
+    // 9. Register IPC Handlers
+    registerIpcHandlers(
+      windowManager,
+      settingsStore,
+      characterRegistry,
+      reminderEngine,
+      timerEngine,
+      systemService,
+      aiService
+    );
+
+    // 9. Launch Pet Window if visible setting is true
     const petVisible = settingsStore.get('pet.visible');
     if (petVisible) {
       windowManager.createPetWindow();
     }
 
-    console.log('[Main] ROA shell initialized successfully with Reminder Engine.');
+    console.log('[Main] ROA shell initialized successfully with Reminders, Timers, and System integration.');
   });
 
   app.on('before-quit', () => {
     isQuitting = true;
     (app as unknown as { isQuitting: boolean }).isQuitting = true;
     getReminderEngine().shutdown();
+    getTimerEngine().shutdown();
+    getSystemService().shutdown();
     closeDb();
   });
 

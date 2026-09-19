@@ -21,6 +21,10 @@ import {
   Filter,
   Brain,
   PartyPopper,
+  Battery,
+  Zap,
+  Monitor,
+  Keyboard,
 } from 'lucide-react';
 import { PetMood, PetPosition, CharacterManifest } from '@shared/types/pet';
 import { AppSettings } from '@shared/types/settings';
@@ -29,17 +33,35 @@ import { useRemindersStore } from './store/useRemindersStore';
 import { ReminderModal } from './components/ReminderModal';
 import { ReminderItem } from './components/ReminderItem';
 import { CharacterCard } from './components/CharacterCard';
-
+import { TimersTabContent } from './components/TimersTabContent';
+import { AITabContent } from './components/AITabContent';
+import { AIProviderStatus } from '@shared/types/ai';
 
 export const DashboardApp: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'reminders' | 'ai' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'reminders' | 'timers' | 'ai' | 'settings'>('overview');
   const [character, setCharacter] = useState<CharacterManifest | null>(null);
   const [characters, setCharacters] = useState<CharacterManifest[]>([]);
   const [mood, setMood] = useState<PetMood>('idle');
   const [position, setPosition] = useState<PetPosition>({ x: 0, y: 0 });
   const [alwaysOnTop, setAlwaysOnTop] = useState(true);
   const [petVisible, setPetVisible] = useState(true);
+  const [clickThrough, setClickThrough] = useState(false);
+  const [startWithWindows, setStartWithWindows] = useState(false);
+  const [lowBatteryNotif, setLowBatteryNotif] = useState(true);
+  const [lowBatteryThreshold, setLowBatteryThreshold] = useState(20);
+  const [idleReaction, setIdleReaction] = useState(false);
+  const [idleThresholdSeconds, setIdleThresholdSeconds] = useState(300);
+  const [shortcutRegistered, setShortcutRegistered] = useState(true);
   const [appVersion, setAppVersion] = useState('0.1.0');
+
+  // Phase 5: AI Settings state
+  const [aiProvider, setAiProvider] = useState<'disabled' | 'gemini'>('disabled');
+  const [aiModel, setAiModel] = useState('gemini-3.8-flash');
+  const [aiMaskedKey, setAiMaskedKey] = useState('');
+  const [aiInputKey, setAiInputKey] = useState('');
+  const [aiStatus, setAiStatus] = useState<AIProviderStatus>('not_configured');
+  const [aiTesting, setAiTesting] = useState(false);
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     // Load initial data via typed IPC
@@ -51,9 +73,27 @@ export const DashboardApp: React.FC = () => {
         setPosition(settings['pet.position']);
         setAlwaysOnTop(settings['pet.alwaysOnTop']);
         setPetVisible(settings['pet.visible']);
+        setClickThrough(settings['pet.clickThrough']);
+        setStartWithWindows(settings['app.startWithWindows']);
+        setLowBatteryNotif(settings['system.lowBatteryNotification']);
+        setLowBatteryThreshold(settings['system.lowBatteryThreshold']);
+        setIdleReaction(settings['system.idleReaction']);
+        setIdleThresholdSeconds(settings['system.idleThresholdSeconds']);
+      }).catch(console.error);
+
+      window.roa.system.getStartupStatus().then(setStartWithWindows).catch(console.error);
+      window.roa.shortcuts.getStatus().then((status) => {
+        setShortcutRegistered(status.registered);
       }).catch(console.error);
 
       window.roa.app.getVersion().then(setAppVersion).catch(console.error);
+
+      window.roa.ai?.getStatus?.().then((info) => {
+        setAiProvider(info.provider);
+        setAiModel(info.model);
+        setAiMaskedKey(info.maskedKey || '');
+        setAiStatus(info.status);
+      }).catch(console.error);
 
       // Listen for mood changes
       const unsubscribeMood = window.roa.pet.onMoodChanged((newMood) => {
@@ -111,6 +151,102 @@ export const DashboardApp: React.FC = () => {
     }, 100);
   };
 
+  const handleToggleClickThrough = () => {
+    const nextVal = !clickThrough;
+    setClickThrough(nextVal);
+    window.roa?.pet?.setClickThrough?.(nextVal);
+  };
+
+  const handleToggleStartWithWindows = () => {
+    const nextVal = !startWithWindows;
+    setStartWithWindows(nextVal);
+    window.roa?.system?.setStartupEnabled?.(nextVal).then(setStartWithWindows).catch(console.error);
+  };
+
+  const handleToggleLowBatteryNotif = () => {
+    const nextVal = !lowBatteryNotif;
+    setLowBatteryNotif(nextVal);
+    window.roa?.settings?.set?.('system.lowBatteryNotification', nextVal);
+  };
+
+  const handleLowBatteryThresholdChange = (val: number) => {
+    setLowBatteryThreshold(val);
+    window.roa?.settings?.set?.('system.lowBatteryThreshold', val);
+  };
+
+  const handleToggleIdleReaction = () => {
+    const nextVal = !idleReaction;
+    setIdleReaction(nextVal);
+    window.roa?.settings?.set?.('system.idleReaction', nextVal);
+  };
+
+  const handleIdleThresholdChange = (val: number) => {
+    setIdleThresholdSeconds(val);
+    window.roa?.settings?.set?.('system.idleThresholdSeconds', val);
+  };
+
+  const handleToggleAiProvider = async () => {
+    const next = aiProvider === 'disabled' ? 'gemini' : 'disabled';
+    setAiProvider(next);
+    await window.roa?.settings?.set?.('ai.provider', next);
+    const info = await window.roa?.ai?.getStatus?.();
+    if (info) setAiStatus(info.status);
+  };
+
+  const handleTestAiConnection = async () => {
+    setAiTesting(true);
+    setAiFeedback(null);
+    try {
+      const res = await window.roa?.ai?.testConnection?.(aiInputKey || undefined);
+      if (res?.success) {
+        setAiFeedback('Connected successfully!');
+        setAiStatus('connected');
+      } else {
+        setAiFeedback(`Failed: ${res?.error || 'Unknown error'}`);
+        setAiStatus('invalid_credential');
+      }
+    } catch (err: any) {
+      setAiFeedback(`Error: ${err?.message || err}`);
+      setAiStatus('error');
+    } finally {
+      setAiTesting(false);
+    }
+  };
+
+  const handleSaveAiCredential = async () => {
+    if (!aiInputKey.trim()) return;
+    setAiTesting(true);
+    setAiFeedback(null);
+    try {
+      await window.roa?.ai?.saveCredential?.(aiInputKey, aiModel);
+      const info = await window.roa?.ai?.getStatus?.();
+      if (info) {
+        setAiProvider(info.provider);
+        setAiMaskedKey(info.maskedKey || '');
+        setAiStatus(info.status);
+      }
+      setAiInputKey('');
+      setAiFeedback('Credential saved and verified!');
+    } catch (err: any) {
+      setAiFeedback(`Save failed: ${err?.message || err}`);
+    } finally {
+      setAiTesting(false);
+    }
+  };
+
+  const handleRemoveAiCredential = async () => {
+    await window.roa?.ai?.removeCredential?.();
+    setAiProvider('disabled');
+    setAiMaskedKey('');
+    setAiStatus('not_configured');
+    setAiFeedback('Credential removed.');
+  };
+
+  const handleModelChange = async (model: string) => {
+    setAiModel(model);
+    await window.roa?.settings?.set?.('ai.model', model);
+  };
+
   return (
     <div className="flex h-screen bg-[#FAFAFA] dark:bg-[#1A1A2E] text-zinc-900 dark:text-zinc-100 overflow-hidden font-sans">
       {/* Sidebar */}
@@ -155,6 +291,23 @@ export const DashboardApp: React.FC = () => {
               </span>
               <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
                 Phase 2
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('timers')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                activeTab === 'timers'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
+              }`}
+            >
+              <span className="flex items-center gap-2.5">
+                <Clock className="w-4 h-4" />
+                Timers & Focus
+              </span>
+              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold">
+                Phase 4
               </span>
             </button>
 
@@ -392,25 +545,14 @@ export const DashboardApp: React.FC = () => {
           <RemindersTabContent />
         )}
 
-        {/* Phase 5: AI Assistant Placeholder */}
+        {/* Phase 4: Full Local Timers & Pomodoro Interface */}
+        {activeTab === 'timers' && (
+          <TimersTabContent />
+        )}
+
+        {/* Phase 5: Full Local AI Assistant Interface */}
         {activeTab === 'ai' && (
-          <div className="max-w-3xl space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">AI Assistant (Optional)</h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Gemini BYOK and local Ollama integrations. Scheduled for Phase 5.
-              </p>
-            </div>
-            <div className="border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl p-12 text-center space-y-3">
-              <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-400 mx-auto flex items-center justify-center">
-                <Bot className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-semibold">Phase 5: AI Provider Abstraction</h3>
-              <p className="text-xs text-zinc-500 max-w-sm mx-auto">
-                Credentials will be encrypted with Electron safeStorage, with tool calling allowlisted for local reminders and timers.
-              </p>
-            </div>
-          </div>
+          <AITabContent onNavigateToSettings={() => setActiveTab('settings')} />
         )}
 
         {/* Settings Tab */}
@@ -419,45 +561,286 @@ export const DashboardApp: React.FC = () => {
             <div>
               <h2 className="text-xl font-semibold tracking-tight">Application Settings</h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Configure application preferences and system integration.
+                Configure application preferences, desktop behavior, and system integration.
               </p>
             </div>
 
             <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl divide-y divide-zinc-100 dark:divide-zinc-800 text-xs">
+              {/* Windows Startup */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium">Always on Top</h4>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Start with Windows</h4>
+                  <p className="text-zinc-500 mt-0.5">Automatically launch ROA quietly in the background when your computer boots</p>
+                </div>
+                <button
+                  onClick={handleToggleStartWithWindows}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
+                    startWithWindows ? 'bg-indigo-600 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+                  }`}
+                >
+                  {startWithWindows ? 'Enabled' : 'Disabled'}
+                </button>
+              </div>
+
+              {/* Global Shortcut */}
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Global Dashboard Shortcut</h4>
+                  <p className="text-zinc-500 mt-0.5">Press this keyboard shortcut anywhere to toggle the ROA dashboard</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <kbd className="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 font-mono text-[11px] font-semibold text-zinc-800 dark:text-zinc-200">
+                    Ctrl + Shift + Space
+                  </kbd>
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                    shortcutRegistered
+                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                      : 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400'
+                  }`}>
+                    {shortcutRegistered ? 'Active' : 'Unavailable'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Pet Click-Through Mode */}
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Pet Click-Through Mode</h4>
+                  <p className="text-zinc-500 mt-0.5">Allow mouse clicks to pass directly through transparent pet areas to desktop apps beneath</p>
+                </div>
+                <button
+                  onClick={handleToggleClickThrough}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
+                    clickThrough ? 'bg-indigo-600 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+                  }`}
+                >
+                  {clickThrough ? 'Enabled' : 'Disabled'}
+                </button>
+              </div>
+
+              {/* Low Battery Alert */}
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Low Battery Notification</h4>
+                  <p className="text-zinc-500 mt-0.5">Notify when battery drops below threshold while running on battery power</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-zinc-400 text-[11px]">Threshold:</span>
+                    <input
+                      type="number"
+                      min="5"
+                      max="50"
+                      value={lowBatteryThreshold}
+                      onChange={(e) => handleLowBatteryThresholdChange(parseInt(e.target.value, 10) || 20)}
+                      className="w-14 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-center font-mono text-xs"
+                    />
+                    <span className="text-zinc-400 text-[11px]">%</span>
+                  </div>
+                  <button
+                    onClick={handleToggleLowBatteryNotif}
+                    className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
+                      lowBatteryNotif ? 'bg-indigo-600 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+                    }`}
+                  >
+                    {lowBatteryNotif ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Idle Reaction */}
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Inactivity / Idle Pet Reaction</h4>
+                  <p className="text-zinc-500 mt-0.5">Pet will take a nap when you are away and wake up when you return (no keystroke tracking)</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-zinc-400 text-[11px]">After:</span>
+                    <input
+                      type="number"
+                      min="30"
+                      max="1800"
+                      step="30"
+                      value={idleThresholdSeconds}
+                      onChange={(e) => handleIdleThresholdChange(parseInt(e.target.value, 10) || 300)}
+                      className="w-16 px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-center font-mono text-xs"
+                    />
+                    <span className="text-zinc-400 text-[11px]">sec</span>
+                  </div>
+                  <button
+                    onClick={handleToggleIdleReaction}
+                    className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
+                      idleReaction ? 'bg-indigo-600 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+                    }`}
+                  >
+                    {idleReaction ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Always on Top */}
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Always on Top</h4>
                   <p className="text-zinc-500 mt-0.5">Keep the pet window floating above normal desktop applications</p>
                 </div>
                 <button
                   onClick={handleToggleAlwaysOnTop}
                   className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
-                    alwaysOnTop ? 'bg-indigo-600 text-white' : 'bg-zinc-200 dark:bg-zinc-700'
+                    alwaysOnTop ? 'bg-indigo-600 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
                   }`}
                 >
                   {alwaysOnTop ? 'Enabled' : 'Disabled'}
                 </button>
               </div>
 
+              {/* Reset Pet Coordinates */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium">Reset Pet Coordinates</h4>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Reset Pet Coordinates</h4>
                   <p className="text-zinc-500 mt-0.5">Restore the pet window to its default bottom-right position</p>
                 </div>
                 <button
                   onClick={handleResetPosition}
-                  className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 font-medium"
+                  className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 font-medium transition-colors"
                 >
                   Reset Position
                 </button>
               </div>
 
+              {/* Tray Integration */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium">System Tray Integration</h4>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">System Tray Integration</h4>
                   <p className="text-zinc-500 mt-0.5">ROA remains running in the Windows system tray when windows are closed</p>
                 </div>
                 <span className="text-emerald-600 dark:text-emerald-400 font-mono">Active</span>
+              </div>
+            </div>
+
+            {/* Phase 5: AI Provider Configuration (BYOK Gemini) */}
+            <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl divide-y divide-zinc-100 dark:divide-zinc-800 text-xs">
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">AI Provider (BYOK Gemini)</h3>
+                    <span
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        aiStatus === 'connected'
+                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                          : aiStatus === 'invalid_credential'
+                          ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
+                          : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                      }`}
+                    >
+                      {aiStatus === 'connected'
+                        ? 'Connected'
+                        : aiStatus === 'invalid_credential'
+                        ? 'Invalid Credential'
+                        : aiStatus === 'rate_limited'
+                        ? 'Rate Limited'
+                        : aiStatus === 'offline'
+                        ? 'Offline'
+                        : 'Not Configured'}
+                    </span>
+                  </div>
+                  <p className="text-zinc-500 mt-0.5">
+                    Provide your own Google Gemini API key. Stored securely with OS encryption (safeStorage).
+                  </p>
+                </div>
+                <button
+                  onClick={handleToggleAiProvider}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
+                    aiProvider === 'gemini'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+                  }`}
+                >
+                  {aiProvider === 'gemini' ? 'Gemini Enabled' : 'Disabled'}
+                </button>
+              </div>
+
+              {/* Model selection */}
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Model Selection</h4>
+                  <p className="text-zinc-500 mt-0.5">Choose which Gemini model powers your assistant</p>
+                </div>
+                <select
+                  value={aiModel}
+                  onChange={(e) => handleModelChange(e.target.value)}
+                  className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-800 dark:text-zinc-200 font-mono"
+                >
+                  <option value="gemini-3.8-flash">gemini-3.8-flash (Recommended)</option>
+                  <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
+                  <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
+                </select>
+              </div>
+
+              {/* Credential input / masked view */}
+              <div className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Gemini API Key</h4>
+                    <p className="text-zinc-500 mt-0.5">
+                      {aiMaskedKey
+                        ? 'Your API key is securely encrypted on disk.'
+                        : 'Enter your API key from Google AI Studio.'}
+                    </p>
+                  </div>
+                  {aiMaskedKey && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs text-zinc-600 dark:text-zinc-400 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700">
+                        {aiMaskedKey}
+                      </span>
+                      <button
+                        onClick={handleRemoveAiCredential}
+                        className="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 dark:text-rose-400 font-medium transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={aiInputKey}
+                    onChange={(e) => setAiInputKey(e.target.value)}
+                    placeholder={aiMaskedKey ? 'Enter new key to update...' : 'AIzaSy...'}
+                    className="flex-1 px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 font-mono text-xs placeholder-zinc-400 focus:outline-none focus:border-indigo-500"
+                  />
+                  <button
+                    onClick={handleTestAiConnection}
+                    disabled={aiTesting}
+                    className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-750 font-medium transition-colors disabled:opacity-50"
+                  >
+                    {aiTesting ? 'Testing...' : 'Test Connection'}
+                  </button>
+                  {aiInputKey.trim() && (
+                    <button
+                      onClick={handleSaveAiCredential}
+                      disabled={aiTesting}
+                      className="px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-50"
+                    >
+                      Save Key
+                    </button>
+                  )}
+                </div>
+
+                {aiFeedback && (
+                  <p
+                    className={`text-xs ${
+                      aiFeedback.includes('successfully') || aiFeedback.includes('verified')
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-amber-600 dark:text-amber-400'
+                    }`}
+                  >
+                    {aiFeedback}
+                  </p>
+                )}
               </div>
             </div>
           </div>
