@@ -1,0 +1,36 @@
+{
+  "$schema": "https://roa.app/schemas/character-manifest.json",
+  "id": "roa-cat",
+  "name": "Roa Cat",
+  "version": "1.0.0",
+  "author": "ROA Team",
+  "description": "A curious and loyal desktop companion cat.",
+  "preview": "preview.png",
+  "animations": {
+    "idle": {
+      "file": "idle.png",
+      "frames": 4,
+      "frameRate": 4,
+      "loop": true
+    },
+    "happy": {
+      "file": "happy.png",
+      "frames": 4,
+      "frameRate": 6,
+      "loop": true
+    },
+    "sleeping": {
+      "file": "sleep.png",
+      "frames": 2,
+      "frameRate": 2,
+      "loop": true
+    }
+  },
+  "moods": ["idle", "happy", "sleeping"],
+  "behaviors": {
+    "idleIntervalMs": [5000, 15000],
+    "walkProbability": 0.3,
+    "walkDistancePx": [100, 300],
+    "speechIntervalMs": [30000, 120000]
+  }
+}
