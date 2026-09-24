@@ -4,6 +4,8 @@ import { getDb } from '../../db';
 import {
   AIStatusInfo,
   AIProviderStatus,
+  AICredentialStatus,
+  AIServiceStatus,
   AIMessage,
   AIChatResponse,
   ToolActivity,
@@ -12,7 +14,7 @@ import { CredentialStore, getCredentialStore } from './credential-store';
 import { ToolRegistry } from './tools/registry';
 import { registerDefaultTools } from './tools/implementations';
 import { AIProvider } from './providers/provider.interface';
-import { GeminiProvider } from './providers/gemini-provider';
+import { GeminiProvider, GEMINI_DEFAULT_MODEL } from './providers/gemini-provider';
 import { DisabledProvider } from './providers/disabled-provider';
 import { SettingsStore } from '../settings-store';
 import { CharacterRegistry } from '../character-registry';
@@ -63,24 +65,18 @@ export class AIService extends EventEmitter {
     };
 
     // 2. Instantiate providers
-    const currentModel = this.settingsStore.get('ai.model') || 'gemini-3.8-flash';
     this.geminiProvider = new GeminiProvider(
       this.credentialStore,
       this.toolRegistry,
       toolContext,
-      currentModel
+      GEMINI_DEFAULT_MODEL
     );
     this.disabledProvider = new DisabledProvider();
 
     // 3. Ensure default conversation exists
     this.ensureDefaultConversation();
 
-    // 4. Listen for model/provider changes in settings
-    this.settingsStore.on('change', (changed) => {
-      if (changed['ai.model']) {
-        this.geminiProvider.setModel(changed['ai.model']);
-      }
-    });
+    // 4. No model change listener needed — model is centrally managed.
   }
 
   private ensureDefaultConversation(): void {
@@ -112,11 +108,35 @@ export class AIService extends EventEmitter {
     const providerSetting = this.settingsStore.get('ai.provider');
     const isConfigured = await this.credentialStore.hasApiKey();
     const maskedKey = await this.credentialStore.getMaskedKey();
-    const model = this.settingsStore.get('ai.model') || 'gemini-3.8-flash';
 
     let status: AIProviderStatus = 'not_configured';
     if (providerSetting === 'gemini') {
       status = await this.geminiProvider.getStatus();
+    }
+
+    // Derive credential status (not affected by transient service errors)
+    let credentialStatus: AICredentialStatus = 'not_configured';
+    if (isConfigured) {
+      credentialStatus =
+        status === 'invalid_credential' ? 'invalid' : 'verified';
+    }
+
+    // Derive service status
+    let serviceStatus: AIServiceStatus = 'unknown';
+    if (!isConfigured || providerSetting !== 'gemini') {
+      serviceStatus = 'unknown';
+    } else if (status === 'connected') {
+      serviceStatus = 'available';
+    } else if (status === 'temporarily_unavailable') {
+      serviceStatus = 'temporarily_unavailable';
+    } else if (status === 'daily_quota_exceeded') {
+      serviceStatus = 'daily_quota_exceeded';
+    } else if (status === 'rate_limited') {
+      serviceStatus = 'rate_limited';
+    } else if (status === 'offline') {
+      serviceStatus = 'offline';
+    } else if (status === 'error' || status === 'invalid_credential') {
+      serviceStatus = 'unknown';
     }
 
     const meta = this.db
@@ -127,14 +147,17 @@ export class AIService extends EventEmitter {
       provider: providerSetting,
       status,
       isConfigured,
-      model,
+      credentialStatus,
+      serviceStatus,
       maskedKey: maskedKey || undefined,
       lastTestedAt: meta?.last_tested_at,
       lastErrorCategory: meta?.last_error_category,
     };
   }
 
-  public async testConnection(apiKey?: string): Promise<{ success: boolean; error?: string }> {
+  public async testConnection(
+    apiKey?: string
+  ): Promise<{ success: boolean; error?: string; code?: AIProviderStatus }> {
     const result = await this.geminiProvider.testConnection(apiKey);
     const now = Date.now();
 
@@ -164,12 +187,8 @@ export class AIService extends EventEmitter {
     return result;
   }
 
-  public async saveCredential(apiKey: string, model?: string): Promise<boolean> {
+  public async saveCredential(apiKey: string): Promise<boolean> {
     await this.credentialStore.saveApiKey(apiKey);
-    if (model) {
-      this.settingsStore.set('ai.model', model);
-      this.geminiProvider.setModel(model);
-    }
     this.settingsStore.set('ai.provider', 'gemini');
 
     // Test connection after saving
@@ -289,6 +308,16 @@ export class AIService extends EventEmitter {
           type: 'aiComplete',
           title: 'Hmm, something went wrong.',
         });
+      }
+      // Push updated service status to the dashboard so badges refresh immediately
+      try {
+        const updatedStatus = await this.getStatus();
+        const dashWin = this.windowManager.getDashboardWindow();
+        if (dashWin && !dashWin.isDestroyed()) {
+          dashWin.webContents.send('roa:ai:statusChanged', updatedStatus);
+        }
+      } catch {
+        // Non-critical — status push failure must not mask the original error
       }
       throw err;
     }

@@ -2,19 +2,41 @@ import { z } from 'zod';
 
 export type AIProviderId = 'gemini' | 'disabled';
 
+/**
+ * Internal provider status — kept for backward compatibility with the
+ * provider interface. Use AICredentialStatus + AIServiceStatus for UI.
+ */
 export type AIProviderStatus =
   | 'not_configured'
   | 'connected'
   | 'invalid_credential'
   | 'rate_limited'
+  | 'daily_quota_exceeded'
+  | 'temporarily_unavailable'
   | 'offline'
   | 'error';
 
+/** Credential validity — independent of transient service issues. */
+export type AICredentialStatus = 'not_configured' | 'verified' | 'invalid';
+
+/** Current Gemini service reachability. */
+export type AIServiceStatus =
+  | 'available'
+  | 'temporarily_unavailable'
+  | 'rate_limited'
+  | 'daily_quota_exceeded'
+  | 'offline'
+  | 'unknown';
+
 export interface AIStatusInfo {
   provider: AIProviderId;
+  /** @deprecated use credentialStatus + serviceStatus */
   status: AIProviderStatus;
   isConfigured: boolean;
-  model: string;
+  /** Credential validity (not affected by transient service errors). */
+  credentialStatus: AICredentialStatus;
+  /** Current service reachability. */
+  serviceStatus: AIServiceStatus;
   maskedKey?: string;
   lastTestedAt?: number;
   lastErrorCategory?: string;

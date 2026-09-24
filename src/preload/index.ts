@@ -137,8 +137,8 @@ const roaApi: ElectronRoaAPI = {
   ai: {
     getStatus: () => ipcRenderer.invoke('roa:ai:getStatus'),
     testConnection: (apiKey?: string) => ipcRenderer.invoke('roa:ai:testConnection', apiKey),
-    saveCredential: (apiKey: string, model?: string) =>
-      ipcRenderer.invoke('roa:ai:saveCredential', apiKey, model),
+    saveCredential: (apiKey: string) =>
+      ipcRenderer.invoke('roa:ai:saveCredential', apiKey),
     removeCredential: () => ipcRenderer.invoke('roa:ai:removeCredential'),
     chat: (message: string) => ipcRenderer.invoke('roa:ai:chat', message),
     getMessages: () => ipcRenderer.invoke('roa:ai:getMessages'),
@@ -149,6 +149,14 @@ const roaApi: ElectronRoaAPI = {
       ipcRenderer.on('roa:ai:toolActivity', handler);
       return () => {
         ipcRenderer.removeListener('roa:ai:toolActivity', handler);
+      };
+    },
+    onStatusChanged: (callback: (info: any) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, info: any) =>
+        callback(info);
+      ipcRenderer.on('roa:ai:statusChanged', handler);
+      return () => {
+        ipcRenderer.removeListener('roa:ai:statusChanged', handler);
       };
     },
   },

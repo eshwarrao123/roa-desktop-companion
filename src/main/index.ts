@@ -1,3 +1,7 @@
+// Prevent ELECTRON_RUN_AS_NODE from leaking to child processes
+// (e.g., when launched from VS Code's integrated terminal)
+delete process.env.ELECTRON_RUN_AS_NODE;
+
 import { app, BrowserWindow } from 'electron';
 import { initDb, closeDb } from './db';
 import { getSettingsStore } from './services/settings-store';

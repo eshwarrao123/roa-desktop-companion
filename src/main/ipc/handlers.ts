@@ -388,10 +388,9 @@ export function registerIpcHandlers(
 
   ipcMain.handle(
     'roa:ai:saveCredential',
-    async (_event, rawKey: unknown, rawModel: unknown) => {
+    async (_event, rawKey: unknown) => {
       const apiKey = z.string().min(1, 'API key is required').parse(rawKey);
-      const model = z.string().optional().parse(rawModel);
-      return ai.saveCredential(apiKey, model);
+      return ai.saveCredential(apiKey);
     }
   );
 

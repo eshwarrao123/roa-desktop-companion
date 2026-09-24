@@ -4,7 +4,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [
+      externalizeDepsPlugin(),
+    ],
     resolve: {
       alias: {
         '@shared': resolve('src/shared'),
@@ -13,6 +15,10 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
+        output: {
+          format: 'cjs',
+          entryFileNames: 'index.cjs',
+        },
         external: ['better-sqlite3'],
       },
     },
@@ -30,6 +36,7 @@ export default defineConfig({
           format: 'cjs',
           entryFileNames: 'index.js',
         },
+        external: ['electron'],
       },
     },
   },

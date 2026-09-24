@@ -25,6 +25,7 @@ import {
   Zap,
   Monitor,
   Keyboard,
+  AlertCircle,
 } from 'lucide-react';
 import { PetMood, PetPosition, CharacterManifest } from '@shared/types/pet';
 import { AppSettings } from '@shared/types/settings';
@@ -54,14 +55,17 @@ export const DashboardApp: React.FC = () => {
   const [shortcutRegistered, setShortcutRegistered] = useState(true);
   const [appVersion, setAppVersion] = useState('0.1.0');
 
-  // Phase 5: AI Settings state
+  // AI Settings state
+  const isElectron = typeof window !== 'undefined' && Boolean(window.roa);
   const [aiProvider, setAiProvider] = useState<'disabled' | 'gemini'>('disabled');
-  const [aiModel, setAiModel] = useState('gemini-3.8-flash');
   const [aiMaskedKey, setAiMaskedKey] = useState('');
   const [aiInputKey, setAiInputKey] = useState('');
   const [aiStatus, setAiStatus] = useState<AIProviderStatus>('not_configured');
+  const [aiCredentialStatus, setAiCredentialStatus] = useState<'not_configured' | 'verified' | 'invalid'>('not_configured');
+  const [aiServiceStatus, setAiServiceStatus] = useState<'available' | 'temporarily_unavailable' | 'rate_limited' | 'daily_quota_exceeded' | 'offline' | 'unknown'>('unknown');
   const [aiTesting, setAiTesting] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+  const [isEditingKey, setIsEditingKey] = useState(false);
 
   useEffect(() => {
     // Load initial data via typed IPC
@@ -90,10 +94,20 @@ export const DashboardApp: React.FC = () => {
 
       window.roa.ai?.getStatus?.().then((info) => {
         setAiProvider(info.provider);
-        setAiModel(info.model);
         setAiMaskedKey(info.maskedKey || '');
         setAiStatus(info.status);
+        setAiCredentialStatus(info.credentialStatus ?? 'not_configured');
+        setAiServiceStatus(info.serviceStatus ?? 'unknown');
       }).catch(console.error);
+
+      // Listen for AI service status push updates (e.g. after a chat error)
+      const unsubAiStatus = window.roa.ai?.onStatusChanged?.((info) => {
+        setAiProvider(info.provider);
+        setAiMaskedKey(info.maskedKey || '');
+        setAiStatus(info.status);
+        setAiCredentialStatus(info.credentialStatus ?? 'not_configured');
+        setAiServiceStatus(info.serviceStatus ?? 'unknown');
+      });
 
       // Listen for mood changes
       const unsubscribeMood = window.roa.pet.onMoodChanged((newMood) => {
@@ -111,6 +125,7 @@ export const DashboardApp: React.FC = () => {
       }, 1000);
 
       return () => {
+        unsubAiStatus?.();
         unsubscribeMood();
         unsubscribeChar();
         clearInterval(posInterval);
@@ -186,24 +201,58 @@ export const DashboardApp: React.FC = () => {
   };
 
   const handleToggleAiProvider = async () => {
+    if (!window.roa?.settings) return;
     const next = aiProvider === 'disabled' ? 'gemini' : 'disabled';
     setAiProvider(next);
-    await window.roa?.settings?.set?.('ai.provider', next);
-    const info = await window.roa?.ai?.getStatus?.();
-    if (info) setAiStatus(info.status);
+    await window.roa.settings.set('ai.provider', next);
+    const info = await window.roa.ai?.getStatus?.();
+    if (info) {
+      setAiStatus(info.status);
+      setAiCredentialStatus(info.credentialStatus ?? 'not_configured');
+      setAiServiceStatus(info.serviceStatus ?? 'unknown');
+    }
   };
 
   const handleTestAiConnection = async () => {
     setAiTesting(true);
     setAiFeedback(null);
     try {
-      const res = await window.roa?.ai?.testConnection?.(aiInputKey || undefined);
+      if (!window.roa?.ai) {
+        setAiFeedback('AI service is only available inside the ROA desktop application.');
+        setAiStatus('not_configured');
+        return;
+      }
+      const res = await window.roa.ai.testConnection(aiInputKey || undefined);
       if (res?.success) {
-        setAiFeedback('Connected successfully!');
+        setAiFeedback('Connection verified successfully.');
         setAiStatus('connected');
+        setAiCredentialStatus('verified');
+        setAiServiceStatus('available');
       } else {
-        setAiFeedback(`Failed: ${res?.error || 'Unknown error'}`);
-        setAiStatus('invalid_credential');
+        const code = res?.code as AIProviderStatus | undefined;
+        setAiStatus(code ?? 'error');
+        // Only mark credential invalid for actual auth failures
+        if (code === 'invalid_credential') {
+          setAiCredentialStatus('invalid');
+          setAiFeedback('Invalid API key. Please check your key from Google AI Studio.');
+        } else if (code === 'daily_quota_exceeded') {
+          setAiCredentialStatus('verified');
+          setAiServiceStatus('daily_quota_exceeded');
+          setAiFeedback("Gemini's free daily limit has been reached. Your key is valid — try again after the quota resets.");
+        } else if (code === 'temporarily_unavailable') {
+          setAiCredentialStatus('verified');
+          setAiServiceStatus('temporarily_unavailable');
+          setAiFeedback('Gemini is temporarily unavailable. Your key is valid — try again in a moment.');
+        } else if (code === 'rate_limited') {
+          setAiCredentialStatus('verified');
+          setAiServiceStatus('rate_limited');
+          setAiFeedback('Rate limit reached. Please wait a moment and try again.');
+        } else if (code === 'offline') {
+          setAiServiceStatus('offline');
+          setAiFeedback('Network error: Unable to reach Gemini. Please check your internet connection.');
+        } else {
+          setAiFeedback(`Connection failed: ${res?.error || 'Unknown error'}`);
+        }
       }
     } catch (err: any) {
       setAiFeedback(`Error: ${err?.message || err}`);
@@ -215,17 +264,24 @@ export const DashboardApp: React.FC = () => {
 
   const handleSaveAiCredential = async () => {
     if (!aiInputKey.trim()) return;
+    if (!window.roa?.ai) {
+      setAiFeedback('Cannot save credentials outside the ROA desktop application.');
+      return;
+    }
     setAiTesting(true);
     setAiFeedback(null);
     try {
-      await window.roa?.ai?.saveCredential?.(aiInputKey, aiModel);
-      const info = await window.roa?.ai?.getStatus?.();
+      await window.roa.ai.saveCredential(aiInputKey);
+      const info = await window.roa.ai.getStatus();
       if (info) {
         setAiProvider(info.provider);
         setAiMaskedKey(info.maskedKey || '');
         setAiStatus(info.status);
+        setAiCredentialStatus(info.credentialStatus ?? 'not_configured');
+        setAiServiceStatus(info.serviceStatus ?? 'unknown');
       }
       setAiInputKey('');
+      setIsEditingKey(false);
       setAiFeedback('Credential saved and verified!');
     } catch (err: any) {
       setAiFeedback(`Save failed: ${err?.message || err}`);
@@ -235,17 +291,16 @@ export const DashboardApp: React.FC = () => {
   };
 
   const handleRemoveAiCredential = async () => {
-    await window.roa?.ai?.removeCredential?.();
+    if (!window.roa?.ai) return;
+    await window.roa.ai.removeCredential();
     setAiProvider('disabled');
     setAiMaskedKey('');
     setAiStatus('not_configured');
+    setAiCredentialStatus('not_configured');
+    setAiServiceStatus('unknown');
     setAiFeedback('Credential removed.');
   };
 
-  const handleModelChange = async (model: string) => {
-    setAiModel(model);
-    await window.roa?.settings?.set?.('ai.model', model);
-  };
 
   return (
     <div className="flex h-screen bg-[#FAFAFA] dark:bg-[#1A1A2E] text-zinc-900 dark:text-zinc-100 overflow-hidden font-sans">
@@ -350,6 +405,18 @@ export const DashboardApp: React.FC = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto p-8">
+        {!isElectron && (
+          <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-amber-900 dark:text-amber-100">Browser Preview Mode</h4>
+              <p className="mt-0.5 text-amber-700 dark:text-amber-300">
+                This screen is available inside the ROA desktop application. Full desktop functionality (pet window, offline reminders, system timers, and AI bridge) requires launching via Electron.
+              </p>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'overview' && (
           <div className="max-w-3xl space-y-6">
             <div>
@@ -719,81 +786,50 @@ export const DashboardApp: React.FC = () => {
               </div>
             </div>
 
-            {/* Phase 5: AI Provider Configuration (BYOK Gemini) */}
+            {/* AI Companion Configuration */}
             <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl divide-y divide-zinc-100 dark:divide-zinc-800 text-xs">
+
+              {/* Header row */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">AI Provider (BYOK Gemini)</h3>
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                        aiStatus === 'connected'
-                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                          : aiStatus === 'invalid_credential'
-                          ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
-                          : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
-                      }`}
-                    >
-                      {aiStatus === 'connected'
-                        ? 'Connected'
-                        : aiStatus === 'invalid_credential'
-                        ? 'Invalid Credential'
-                        : aiStatus === 'rate_limited'
-                        ? 'Rate Limited'
-                        : aiStatus === 'offline'
-                        ? 'Offline'
-                        : 'Not Configured'}
-                    </span>
-                  </div>
-                  <p className="text-zinc-500 mt-0.5">
-                    Provide your own Google Gemini API key. Stored securely with OS encryption (safeStorage).
-                  </p>
+                  <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">AI Companion</h4>
+                  <p className="text-zinc-500 mt-0.5">Google Gemini — Bring Your Own Key</p>
                 </div>
                 <button
                   onClick={handleToggleAiProvider}
-                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors ${
+                  disabled={!isElectron}
+                  className={`px-3 py-1.5 rounded-md font-medium text-xs transition-colors disabled:opacity-50 ${
                     aiProvider === 'gemini'
                       ? 'bg-indigo-600 text-white'
                       : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
                   }`}
                 >
-                  {aiProvider === 'gemini' ? 'Gemini Enabled' : 'Disabled'}
+                  {aiProvider === 'gemini' ? 'Enabled' : 'Disabled'}
                 </button>
               </div>
 
-              {/* Model selection */}
-              <div className="p-4 flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Model Selection</h4>
-                  <p className="text-zinc-500 mt-0.5">Choose which Gemini model powers your assistant</p>
-                </div>
-                <select
-                  value={aiModel}
-                  onChange={(e) => handleModelChange(e.target.value)}
-                  className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-800 dark:text-zinc-200 font-mono"
-                >
-                  <option value="gemini-3.8-flash">gemini-3.8-flash (Recommended)</option>
-                  <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite</option>
-                  <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
-                </select>
-              </div>
-
-              {/* Credential input / masked view */}
+              {/* Credential section */}
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Gemini API Key</h4>
+                    <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Credential</h4>
                     <p className="text-zinc-500 mt-0.5">
                       {aiMaskedKey
-                        ? 'Your API key is securely encrypted on disk.'
-                        : 'Enter your API key from Google AI Studio.'}
+                        ? 'Stored securely via Windows DPAPI (safeStorage).'
+                        : 'Enter your Google AI Studio API key.'}
                     </p>
                   </div>
-                  {aiMaskedKey && (
+                  {aiMaskedKey && !isEditingKey && (
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs text-zinc-600 dark:text-zinc-400 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded border border-zinc-200 dark:border-zinc-700">
                         {aiMaskedKey}
                       </span>
+                      <button
+                        onClick={() => setIsEditingKey(true)}
+                        className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 font-medium transition-colors"
+                      >
+                        Change Key
+                      </button>
                       <button
                         onClick={handleRemoveAiCredential}
                         className="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:hover:bg-rose-950/50 dark:text-rose-400 font-medium transition-colors"
@@ -804,42 +840,118 @@ export const DashboardApp: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="password"
-                    value={aiInputKey}
-                    onChange={(e) => setAiInputKey(e.target.value)}
-                    placeholder={aiMaskedKey ? 'Enter new key to update...' : 'AIzaSy...'}
-                    className="flex-1 px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 font-mono text-xs placeholder-zinc-400 focus:outline-none focus:border-indigo-500"
-                  />
-                  <button
-                    onClick={handleTestAiConnection}
-                    disabled={aiTesting}
-                    className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-750 font-medium transition-colors disabled:opacity-50"
-                  >
-                    {aiTesting ? 'Testing...' : 'Test Connection'}
-                  </button>
-                  {aiInputKey.trim() && (
+                {(!aiMaskedKey || isEditingKey) && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      value={aiInputKey}
+                      onChange={(e) => setAiInputKey(e.target.value)}
+                      placeholder="AIzaSy..."
+                      disabled={!isElectron}
+                      className="flex-1 px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 font-mono text-xs placeholder-zinc-400 focus:outline-none focus:border-indigo-500 disabled:opacity-50"
+                    />
                     <button
-                      onClick={handleSaveAiCredential}
-                      disabled={aiTesting}
-                      className="px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-50"
+                      onClick={handleTestAiConnection}
+                      disabled={aiTesting || !isElectron}
+                      className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-750 font-medium transition-colors disabled:opacity-50"
                     >
-                      Save Key
+                      {aiTesting ? 'Testing...' : 'Test Connection'}
                     </button>
-                  )}
-                </div>
+                    {aiInputKey.trim() && (
+                      <button
+                        onClick={handleSaveAiCredential}
+                        disabled={aiTesting || !isElectron}
+                        className="px-3 py-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition-colors disabled:opacity-50"
+                      >
+                        Save Key
+                      </button>
+                    )}
+                    {isEditingKey && (
+                      <button
+                        onClick={() => {
+                          setIsEditingKey(false);
+                          setAiInputKey('');
+                        }}
+                        className="px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {aiFeedback && (
                   <p
                     className={`text-xs ${
-                      aiFeedback.includes('successfully') || aiFeedback.includes('verified')
+                      aiFeedback.includes('successfully') || aiFeedback.includes('verified') || aiFeedback.includes('saved')
                         ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-amber-600 dark:text-amber-400'
+                        : aiFeedback.includes('limit') || aiFeedback.includes('unavailable') || aiFeedback.includes('rate')
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-rose-600 dark:text-rose-400'
                     }`}
                   >
                     {aiFeedback}
                   </p>
+                )}
+              </div>
+
+              {/* Provider Status section */}
+              <div className="p-4 space-y-3">
+                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">Provider Status</h4>
+
+                {/* Credential status row */}
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">Credential</span>
+                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                    aiCredentialStatus === 'verified'
+                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                      : aiCredentialStatus === 'invalid'
+                      ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-800'
+                      : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                  }`}>
+                    {aiCredentialStatus === 'verified' ? 'Verified' : aiCredentialStatus === 'invalid' ? 'Invalid' : 'Not Configured'}
+                  </span>
+                </div>
+
+                {/* Service status row */}
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-500">Service</span>
+                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                    aiServiceStatus === 'available'
+                      ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                      : aiServiceStatus === 'temporarily_unavailable' || aiServiceStatus === 'rate_limited'
+                      ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+                      : aiServiceStatus === 'daily_quota_exceeded'
+                      ? 'bg-orange-50 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
+                      : aiServiceStatus === 'offline'
+                      ? 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                      : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+                  }`}>
+                    {aiServiceStatus === 'available'
+                      ? 'Available'
+                      : aiServiceStatus === 'temporarily_unavailable'
+                      ? 'Temporarily Unavailable'
+                      : aiServiceStatus === 'daily_quota_exceeded'
+                      ? 'Daily Limit Reached'
+                      : aiServiceStatus === 'rate_limited'
+                      ? 'Rate Limited'
+                      : aiServiceStatus === 'offline'
+                      ? 'Offline'
+                      : 'Unknown'}
+                  </span>
+                </div>
+
+                {/* Test connection action */}
+                {aiMaskedKey && !isEditingKey && (
+                  <div className="pt-1">
+                    <button
+                      onClick={handleTestAiConnection}
+                      disabled={aiTesting || !isElectron}
+                      className="px-3 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 font-medium transition-colors disabled:opacity-50"
+                    >
+                      {aiTesting ? 'Testing...' : 'Test Connection'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

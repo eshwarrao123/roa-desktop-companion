@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Loader2,
   Wrench,
+  WifiOff,
 } from 'lucide-react';
 import { AIMessage, AIStatusInfo, ToolActivity } from '@shared/types/ai';
 
@@ -20,6 +21,9 @@ interface AITabContentProps {
 }
 
 export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings }) => {
+  const isElectron = typeof window !== 'undefined' && Boolean(window.roa);
+  const isAiBridgeAvailable = isElectron && Boolean(window.roa?.ai);
+
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,12 +44,18 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
       window.roa.ai.getMessages().then(setMessages).catch(console.error);
 
       // Listen for tool activity
-      const unsub = window.roa.ai.onToolActivity((activity) => {
+      const unsubTool = window.roa.ai.onToolActivity((activity) => {
         setToolActivities((prev) => [...prev, activity]);
       });
 
+      // Listen for service status push updates (e.g. after a chat error)
+      const unsubStatus = window.roa.ai.onStatusChanged?.((info) => {
+        setStatusInfo(info);
+      });
+
       return () => {
-        unsub?.();
+        unsubTool?.();
+        unsubStatus?.();
       };
     }
     return undefined;
@@ -72,6 +82,19 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
       createdAt: Date.now(),
     };
     setMessages((prev) => [...prev, tempUserMsg]);
+
+    if (!window.roa?.ai) {
+      const errorMsg: AIMessage = {
+        id: `err-${Date.now()}`,
+        conversationId: 'default-conversation',
+        role: 'assistant',
+        content: 'This screen is available inside the ROA desktop application.',
+        createdAt: Date.now(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await window.roa.ai.chat(text);
@@ -105,9 +128,9 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
   const handleClearChat = async () => {
     if (window.roa?.ai) {
       await window.roa.ai.clearConversation();
-      setMessages([]);
-      setToolActivities([]);
     }
+    setMessages([]);
+    setToolActivities([]);
   };
 
   const quickPrompts = [
@@ -118,6 +141,37 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
   ];
 
   const isConfigured = statusInfo?.isConfigured && statusInfo?.provider === 'gemini';
+  const credentialStatus = statusInfo?.credentialStatus ?? 'not_configured';
+  const serviceStatus = statusInfo?.serviceStatus ?? 'unknown';
+
+  /** True only when key is valid AND service is currently responding. */
+  const isFullyAvailable = isConfigured && serviceStatus === 'available';
+  const isDailyQuota = serviceStatus === 'daily_quota_exceeded';
+  const isTemporarilyUnavailable = serviceStatus === 'temporarily_unavailable';
+
+  const headerBadgeLabel = isFullyAvailable
+    ? 'Gemini Connected'
+    : isDailyQuota
+    ? 'Daily Limit Reached'
+    : isTemporarilyUnavailable
+    ? 'Temporarily Unavailable'
+    : serviceStatus === 'rate_limited'
+    ? 'Rate Limited'
+    : serviceStatus === 'offline'
+    ? 'Offline'
+    : isConfigured
+    ? 'Gemini Ready'
+    : 'AI Offline';
+
+  const headerBadgeClass = isFullyAvailable
+    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+    : isDailyQuota || isTemporarilyUnavailable || serviceStatus === 'rate_limited'
+    ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+    : serviceStatus === 'offline'
+    ? 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
+    : isConfigured
+    ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'
+    : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700';
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] max-w-4xl mx-auto">
@@ -127,21 +181,15 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
           <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
             <Bot className="w-5 h-5" />
           </div>
-          <div>
+        <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">AI Companion</h2>
-              <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                  isConfigured
-                    ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                    : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700'
-                }`}
-              >
-                {isConfigured ? 'Gemini Connected' : 'AI Offline'}
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${headerBadgeClass}`}>
+                {headerBadgeLabel}
               </span>
             </div>
             <p className="text-[11px] text-zinc-500">
-              {statusInfo?.model || 'gemini-3.8-flash'} • Local safe tool calling
+              Powered by Google Gemini • Local safe tool calling
             </p>
           </div>
         </div>
@@ -160,8 +208,56 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
         </div>
       </div>
 
+      {/* Browser Environment Notice */}
+      {!isElectron && (
+        <div className="mt-3 p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs">
+            <span className="font-semibold text-amber-900 dark:text-amber-200 block">
+              Desktop Application Required
+            </span>
+            <span className="text-amber-700 dark:text-amber-300 block mt-0.5">
+              This screen is available inside the ROA desktop application. The AI Assistant and IPC bridge require the Electron desktop environment.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Daily Quota Notice */}
+      {isElectron && isConfigured && isDailyQuota && (
+        <div className="mt-3 p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs">
+            <span className="font-semibold text-amber-900 dark:text-amber-200 block">
+              Daily Limit Reached
+            </span>
+            <span className="text-amber-700 dark:text-amber-300 block mt-0.5">
+              Gemini&apos;s free daily limit has been reached. Your API key is still valid.
+              ROA&apos;s local reminders, timers, and other features continue to work.
+              Gemini will be available again after the quota resets.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Temporarily Unavailable Notice */}
+      {isElectron && isConfigured && isTemporarilyUnavailable && (
+        <div className="mt-3 p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 flex items-start gap-3">
+          <WifiOff className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-xs">
+            <span className="font-semibold text-amber-900 dark:text-amber-200 block">
+              Service Temporarily Unavailable
+            </span>
+            <span className="text-amber-700 dark:text-amber-300 block mt-0.5">
+              Gemini is under high demand right now. Your API key is valid.
+              Try again in a moment.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Unconfigured Notice */}
-      {!isConfigured && (
+      {isElectron && !isConfigured && (
         <div className="mt-3 p-3.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-800/50 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
@@ -203,7 +299,8 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(p.query)}
-                  className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] hover:border-indigo-300 dark:hover:border-indigo-600 text-left text-xs text-zinc-700 dark:text-zinc-300 transition-all shadow-sm group"
+                  disabled={!isElectron}
+                  className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] hover:border-indigo-300 dark:hover:border-indigo-600 text-left text-xs text-zinc-700 dark:text-zinc-300 transition-all shadow-sm group disabled:opacity-50"
                 >
                   <span className="font-medium text-zinc-900 dark:text-zinc-100 block group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
                     {p.label}
@@ -290,9 +387,11 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={isLoading}
+            disabled={isLoading || !isElectron}
             placeholder={
-              isConfigured
+              !isElectron
+                ? 'This screen is available inside the ROA desktop application.'
+                : isConfigured
                 ? 'Ask a question or say "Remind me to drink water in 30 minutes"...'
                 : 'AI disabled. Configure Gemini in Settings or use tabs directly.'
             }
@@ -300,7 +399,7 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
           />
           <button
             onClick={() => handleSendMessage()}
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || !isElectron}
             className="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white transition-colors"
             title="Send message"
           >

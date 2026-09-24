@@ -19,6 +19,7 @@ import {
 } from './system';
 import {
   AIStatusInfo,
+  AIProviderStatus,
   AIMessage,
   AIChatResponse,
   ToolActivity,
@@ -110,13 +111,16 @@ export interface ElectronRoaAPI {
   };
   ai: {
     getStatus: () => Promise<AIStatusInfo>;
-    testConnection: (apiKey?: string) => Promise<{ success: boolean; error?: string }>;
-    saveCredential: (apiKey: string, model?: string) => Promise<boolean>;
+    testConnection: (
+      apiKey?: string
+    ) => Promise<{ success: boolean; error?: string; code?: AIProviderStatus }>;
+    saveCredential: (apiKey: string) => Promise<boolean>;
     removeCredential: () => Promise<boolean>;
     chat: (message: string) => Promise<AIChatResponse>;
     getMessages: () => Promise<AIMessage[]>;
     clearConversation: () => Promise<void>;
     onToolActivity: (callback: (activity: ToolActivity) => void) => () => void;
+    onStatusChanged: (callback: (info: AIStatusInfo) => void) => () => void;
   };
   settings: {
     get: <K extends SettingKey>(key: K) => Promise<AppSettings[K]>;
