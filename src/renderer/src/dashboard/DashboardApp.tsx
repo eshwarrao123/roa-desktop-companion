@@ -314,7 +314,7 @@ export const DashboardApp: React.FC = () => {
             </div>
             <div>
               <h1 className="font-semibold text-sm leading-none tracking-tight">ROA</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Companion Shell</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Your Companion</p>
             </div>
           </div>
 
@@ -334,53 +334,38 @@ export const DashboardApp: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('reminders')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                 activeTab === 'reminders'
                   ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
                   : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
               }`}
             >
-              <span className="flex items-center gap-2.5">
-                <Bell className="w-4 h-4" />
-                Reminders
-              </span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
-                Phase 2
-              </span>
+              <Bell className="w-4 h-4" />
+              Reminders
             </button>
 
             <button
               onClick={() => setActiveTab('timers')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                 activeTab === 'timers'
                   ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
                   : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
               }`}
             >
-              <span className="flex items-center gap-2.5">
-                <Clock className="w-4 h-4" />
-                Timers & Focus
-              </span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold">
-                Phase 4
-              </span>
+              <Clock className="w-4 h-4" />
+              Focus
             </button>
 
             <button
               onClick={() => setActiveTab('ai')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                 activeTab === 'ai'
                   ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
                   : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
               }`}
             >
-              <span className="flex items-center gap-2.5">
-                <Bot className="w-4 h-4" />
-                AI Assistant
-              </span>
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500">
-                Phase 5
-              </span>
+              <Bot className="w-4 h-4" />
+              Ask ROA
             </button>
 
             <button
@@ -398,8 +383,8 @@ export const DashboardApp: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="pt-4 border-t border-zinc-200 dark:border-[#3D3D6B] px-2 text-[11px] text-zinc-500 font-mono">
-          <span>v{appVersion} • Phase 1 Shell</span>
+        <div className="pt-4 border-t border-zinc-200 dark:border-[#3D3D6B] px-2 text-[11px] text-zinc-500">
+          <span>Version {appVersion}</span>
         </div>
       </aside>
 
@@ -420,22 +405,17 @@ export const DashboardApp: React.FC = () => {
         {activeTab === 'overview' && (
           <div className="max-w-3xl space-y-6">
             <div>
-              <h2 className="text-xl font-semibold tracking-tight">Desktop Companion Overview</h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Control your desktop pet, configure window placement, and monitor system storage.
+              <h2 className="text-2xl font-semibold tracking-tight">Home</h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                Your companion is here to help you stay focused and on track.
               </p>
             </div>
 
-            {/* Character Selector Section */}
+            {/* Current Companion */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                  Select Companion Character
-                </h3>
-                <span className="text-xs text-zinc-500 font-mono">
-                  {characters.length} Available
-                </span>
-              </div>
+              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Your Companion
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {characters.map((char) => (
                   <CharacterCard
@@ -448,18 +428,15 @@ export const DashboardApp: React.FC = () => {
               </div>
             </div>
 
-            {/* Mood & Animation Controller Card */}
+            {/* Mood Controller Card */}
             <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl p-5 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-semibold">Mood & Animation State</h3>
+                  <h3 className="text-sm font-semibold">Current Mood</h3>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Active mood for {character?.name ?? 'your pet'}. Pet will also autonomously walk and react to events.
+                    {character?.name ?? 'Your companion'} is currently <span className="capitalize font-medium text-zinc-700 dark:text-zinc-300">{mood}</span>
                   </p>
                 </div>
-                <span className="text-[11px] font-mono bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 rounded-full capitalize">
-                  Current: {mood}
-                </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
@@ -529,7 +506,7 @@ export const DashboardApp: React.FC = () => {
             <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl p-5 shadow-sm space-y-4">
               <div className="flex items-center gap-2">
                 <Move className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <h3 className="text-sm font-semibold">Pet Window & Placement</h3>
+                <h3 className="text-sm font-semibold">Window Placement</h3>
               </div>
 
               <div className="grid grid-cols-2 gap-4 text-xs">
@@ -541,9 +518,9 @@ export const DashboardApp: React.FC = () => {
                 </div>
 
                 <div className="p-3 rounded-lg bg-zinc-50 dark:bg-[#2D2D4E] border border-zinc-200/80 dark:border-zinc-700/60">
-                  <span className="text-zinc-500 block mb-1">Window Mode</span>
-                  <span className="font-mono text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    Transparent • Frameless
+                  <span className="text-zinc-500 block mb-1">Status</span>
+                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                    Active
                   </span>
                 </div>
               </div>
@@ -578,29 +555,25 @@ export const DashboardApp: React.FC = () => {
               </div>
             </div>
 
-            {/* Storage & Architecture Card */}
+            {/* Privacy & Data Card */}
             <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl p-5 shadow-sm space-y-3">
               <div className="flex items-center gap-2">
-                <Database className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <h3 className="text-sm font-semibold">Local Storage & Security</h3>
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <h3 className="text-sm font-semibold">Privacy & Data</h3>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                <div className="p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
-                  <span className="text-zinc-500 block text-[11px]">Database Engine</span>
-                  <span>SQLite (better-sqlite3)</span>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
+                  <span className="text-zinc-600 dark:text-zinc-400">All data stored locally</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓</span>
                 </div>
-                <div className="p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
-                  <span className="text-zinc-500 block text-[11px]">Schema Version</span>
-                  <span>v1 (Initial Migration)</span>
+                <div className="flex items-center justify-between p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
+                  <span className="text-zinc-600 dark:text-zinc-400">Works fully offline</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓</span>
                 </div>
-                <div className="p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
-                  <span className="text-zinc-500 block text-[11px]">Journal Mode</span>
-                  <span>WAL (Write-Ahead Logging)</span>
-                </div>
-                <div className="p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
-                  <span className="text-zinc-500 block text-[11px]">Credential Security</span>
-                  <span className="text-indigo-600 dark:text-indigo-400">safeStorage (OS DPAPI)</span>
+                <div className="flex items-center justify-between p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
+                  <span className="text-zinc-600 dark:text-zinc-400">Credentials encrypted</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓</span>
                 </div>
               </div>
             </div>
@@ -626,9 +599,9 @@ export const DashboardApp: React.FC = () => {
         {activeTab === 'settings' && (
           <div className="max-w-3xl space-y-6">
             <div>
-              <h2 className="text-xl font-semibold tracking-tight">Application Settings</h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                Configure application preferences, desktop behavior, and system integration.
+              <h2 className="text-2xl font-semibold tracking-tight">Settings</h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                Customize how ROA works with your desktop.
               </p>
             </div>
 
@@ -636,8 +609,8 @@ export const DashboardApp: React.FC = () => {
               {/* Windows Startup */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Start with Windows</h4>
-                  <p className="text-zinc-500 mt-0.5">Automatically launch ROA quietly in the background when your computer boots</p>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Launch at Startup</h4>
+                  <p className="text-zinc-500 mt-0.5">Open ROA automatically when Windows starts</p>
                 </div>
                 <button
                   onClick={handleToggleStartWithWindows}
@@ -652,8 +625,8 @@ export const DashboardApp: React.FC = () => {
               {/* Global Shortcut */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Global Dashboard Shortcut</h4>
-                  <p className="text-zinc-500 mt-0.5">Press this keyboard shortcut anywhere to toggle the ROA dashboard</p>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Global Shortcut</h4>
+                  <p className="text-zinc-500 mt-0.5">Press this anywhere to open ROA</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <kbd className="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 font-mono text-[11px] font-semibold text-zinc-800 dark:text-zinc-200">
@@ -672,8 +645,8 @@ export const DashboardApp: React.FC = () => {
               {/* Pet Click-Through Mode */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Pet Click-Through Mode</h4>
-                  <p className="text-zinc-500 mt-0.5">Allow mouse clicks to pass directly through transparent pet areas to desktop apps beneath</p>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Click-Through Mode</h4>
+                  <p className="text-zinc-500 mt-0.5">Let clicks pass through your companion to windows beneath</p>
                 </div>
                 <button
                   onClick={handleToggleClickThrough}
@@ -688,8 +661,8 @@ export const DashboardApp: React.FC = () => {
               {/* Low Battery Alert */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Low Battery Notification</h4>
-                  <p className="text-zinc-500 mt-0.5">Notify when battery drops below threshold while running on battery power</p>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Low Battery Alert</h4>
+                  <p className="text-zinc-500 mt-0.5">Get notified when battery is running low</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
@@ -718,8 +691,8 @@ export const DashboardApp: React.FC = () => {
               {/* Idle Reaction */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Inactivity / Idle Pet Reaction</h4>
-                  <p className="text-zinc-500 mt-0.5">Pet will take a nap when you are away and wake up when you return (no keystroke tracking)</p>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Sleep When Idle</h4>
+                  <p className="text-zinc-500 mt-0.5">Your companion takes a nap when you're away</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
@@ -762,11 +735,11 @@ export const DashboardApp: React.FC = () => {
                 </button>
               </div>
 
-              {/* Reset Pet Coordinates */}
+              {/* Reset Position */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Reset Pet Coordinates</h4>
-                  <p className="text-zinc-500 mt-0.5">Restore the pet window to its default bottom-right position</p>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Reset Position</h4>
+                  <p className="text-zinc-500 mt-0.5">Move your companion back to the bottom-right corner</p>
                 </div>
                 <button
                   onClick={handleResetPosition}
@@ -779,10 +752,10 @@ export const DashboardApp: React.FC = () => {
               {/* Tray Integration */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">System Tray Integration</h4>
-                  <p className="text-zinc-500 mt-0.5">ROA remains running in the Windows system tray when windows are closed</p>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">System Tray</h4>
+                  <p className="text-zinc-500 mt-0.5">ROA stays in your system tray</p>
                 </div>
-                <span className="text-emerald-600 dark:text-emerald-400 font-mono">Active</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Active</span>
               </div>
             </div>
 
@@ -792,8 +765,8 @@ export const DashboardApp: React.FC = () => {
               {/* Header row */}
               <div className="p-4 flex items-center justify-between">
                 <div>
-                  <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">AI Companion</h4>
-                  <p className="text-zinc-500 mt-0.5">Google Gemini — Bring Your Own Key</p>
+                  <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">AI Assistant</h4>
+                  <p className="text-zinc-500 mt-0.5">Powered by Google Gemini with your API key</p>
                 </div>
                 <button
                   onClick={handleToggleAiProvider}
@@ -812,11 +785,11 @@ export const DashboardApp: React.FC = () => {
               <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Credential</h4>
+                    <h4 className="font-medium text-zinc-900 dark:text-zinc-100">API Key</h4>
                     <p className="text-zinc-500 mt-0.5">
                       {aiMaskedKey
-                        ? 'Stored securely via Windows DPAPI (safeStorage).'
-                        : 'Enter your Google AI Studio API key.'}
+                        ? 'Your key is stored securely on this device.'
+                        : 'Get your free API key from Google AI Studio.'}
                     </p>
                   </div>
                   {aiMaskedKey && !isEditingKey && (
@@ -897,11 +870,11 @@ export const DashboardApp: React.FC = () => {
 
               {/* Provider Status section */}
               <div className="p-4 space-y-3">
-                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">Provider Status</h4>
+                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">Status</h4>
 
                 {/* Credential status row */}
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-500">Credential</span>
+                  <span className="text-zinc-500">API Key</span>
                   <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
                     aiCredentialStatus === 'verified'
                       ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
@@ -1040,9 +1013,9 @@ const RemindersTabContent: React.FC = () => {
       {/* Header & New Reminder Action */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight">Local Reminders Engine</h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Offline-first scheduling backed by SQLite with watchdog recovery and native notifications.
+          <h2 className="text-2xl font-semibold tracking-tight">Reminders</h2>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            Your reminders work offline and stay private on this device.
           </p>
         </div>
         <button
@@ -1050,30 +1023,30 @@ const RemindersTabContent: React.FC = () => {
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all hover:shadow"
         >
           <Plus className="w-3.5 h-3.5" />
-          Add Reminder
+          New Reminder
         </button>
       </div>
 
       {/* Stats Summary Cards */}
       <div className="grid grid-cols-3 gap-3">
         <div className="p-3.5 rounded-xl bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] shadow-sm">
-          <span className="text-[11px] text-zinc-500 block mb-1">Active Reminders</span>
-          <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+          <span className="text-xs text-zinc-500 block mb-1">Active</span>
+          <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
             {activeCount}
           </span>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] shadow-sm">
-          <span className="text-[11px] text-zinc-500 block mb-1">Total Scheduled</span>
-          <span className="text-xl font-bold text-zinc-800 dark:text-zinc-200">
+          <span className="text-xs text-zinc-500 block mb-1">Total</span>
+          <span className="text-2xl font-bold text-zinc-800 dark:text-zinc-200">
             {reminders.length}
           </span>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] shadow-sm">
-          <span className="text-[11px] text-zinc-500 block mb-1">Next Occurrence</span>
-          <span className="text-xs font-semibold truncate text-emerald-600 dark:text-emerald-400 block mt-1 font-mono">
-            {nextReminder ? nextReminder.title : 'None scheduled'}
+          <span className="text-xs text-zinc-500 block mb-1">Coming Up</span>
+          <span className="text-sm font-semibold truncate text-emerald-600 dark:text-emerald-400 block mt-1">
+            {nextReminder ? nextReminder.title : 'None'}
           </span>
         </div>
       </div>
