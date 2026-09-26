@@ -31,7 +31,7 @@ import { ReminderModal } from './components/ReminderModal';
 import { ReminderItem } from './components/ReminderItem';
 import { CharacterCard } from './components/CharacterCard';
 import { TimersTabContent } from './components/TimersTabContent';
-import { AITabContent } from './components/AITabContent';
+import { AITabContent } from './components/ai/AITabContent';
 import { HomeTabContent } from './components/home';
 import { AIProviderStatus } from '@shared/types/ai';
 import { DashboardShell } from './layout/DashboardShell';
