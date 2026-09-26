@@ -4,7 +4,7 @@ import { Reminder, CreateReminderInput, UpdateReminderInput } from '@shared/type
 interface RemindersState {
   reminders: Reminder[];
   isLoading: boolean;
-  filter: 'all' | 'active' | 'completed';
+  filter: 'all' | 'active' | 'inactive';
   searchQuery: string;
 
   fetchReminders: () => Promise<void>;
@@ -13,7 +13,7 @@ interface RemindersState {
   deleteReminder: (id: string) => Promise<void>;
   toggleReminder: (id: string, enabled: boolean) => Promise<void>;
   snoozeReminder: (id: string, minutes: number) => Promise<void>;
-  setFilter: (filter: 'all' | 'active' | 'completed') => void;
+  setFilter: (filter: 'all' | 'active' | 'inactive') => void;
   setSearchQuery: (query: string) => void;
 }
 
