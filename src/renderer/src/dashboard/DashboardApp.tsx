@@ -32,6 +32,7 @@ import { ReminderItem } from './components/ReminderItem';
 import { CharacterCard } from './components/CharacterCard';
 import { TimersTabContent } from './components/TimersTabContent';
 import { AITabContent } from './components/AITabContent';
+import { HomeTabContent } from './components/home';
 import { AIProviderStatus } from '@shared/types/ai';
 import { DashboardShell } from './layout/DashboardShell';
 
@@ -314,181 +315,11 @@ export const DashboardApp: React.FC = () => {
         )}
 
         {activeTab === 'overview' && (
-          <div className="max-w-3xl space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold tracking-tight">Home</h2>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                Your companion is here to help you stay focused and on track.
-              </p>
-            </div>
-
-            {/* Current Companion */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                Your Companion
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {characters.map((char) => (
-                  <CharacterCard
-                    key={char.id}
-                    character={char}
-                    isActive={character?.id === char.id}
-                    onSelect={handleSelectCharacter}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Mood Controller Card */}
-            <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl p-5 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold">Current Mood</h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    {character?.name ?? 'Your companion'} is currently <span className="capitalize font-medium text-zinc-700 dark:text-zinc-300">{mood}</span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-                <button
-                  onClick={() => handleMoodChange('idle')}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                    mood === 'idle'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                  }`}
-                >
-                  <Sun className="w-3.5 h-3.5" />
-                  Idle
-                </button>
-
-                <button
-                  onClick={() => handleMoodChange('happy')}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                    mood === 'happy'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                  }`}
-                >
-                  <Smile className="w-3.5 h-3.5" />
-                  Happy
-                </button>
-
-                <button
-                  onClick={() => handleMoodChange('sleeping')}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                    mood === 'sleeping'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                  }`}
-                >
-                  <Bed className="w-3.5 h-3.5" />
-                  Sleeping
-                </button>
-
-                <button
-                  onClick={() => handleMoodChange('thinking')}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                    mood === 'thinking'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                  }`}
-                >
-                  <Brain className="w-3.5 h-3.5" />
-                  Thinking
-                </button>
-
-                <button
-                  onClick={() => handleMoodChange('celebrating')}
-                  className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium border transition-all ${
-                    mood === 'celebrating'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-zinc-50 dark:bg-[#2D2D4E] text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
-                  }`}
-                >
-                  <PartyPopper className="w-3.5 h-3.5" />
-                  Celebrating
-                </button>
-              </div>
-            </div>
-
-            {/* Window & Placement Card */}
-            <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl p-5 shadow-sm space-y-4">
-              <div className="flex items-center gap-2">
-                <Move className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                <h3 className="text-sm font-semibold">Window Placement</h3>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="p-3 rounded-lg bg-zinc-50 dark:bg-[#2D2D4E] border border-zinc-200/80 dark:border-zinc-700/60">
-                  <span className="text-zinc-500 block mb-1">Coordinates</span>
-                  <span className="font-mono text-sm font-medium">
-                    X: {position.x}px • Y: {position.y}px
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-lg bg-zinc-50 dark:bg-[#2D2D4E] border border-zinc-200/80 dark:border-zinc-700/60">
-                  <span className="text-zinc-500 block mb-1">Status</span>
-                  <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                    Active
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
-                  onClick={handleToggleAlwaysOnTop}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                    alwaysOnTop
-                      ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800'
-                      : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700'
-                  }`}
-                >
-                  Always on Top: {alwaysOnTop ? 'Enabled' : 'Disabled'}
-                </button>
-
-                <button
-                  onClick={handleTogglePetVisible}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  {petVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  {petVisible ? 'Hide Pet' : 'Show Pet'}
-                </button>
-
-                <button
-                  onClick={handleResetPosition}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Reset to Bottom-Right
-                </button>
-              </div>
-            </div>
-
-            {/* Privacy & Data Card */}
-            <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl p-5 shadow-sm space-y-3">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <h3 className="text-sm font-semibold">Privacy & Data</h3>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
-                  <span className="text-zinc-600 dark:text-zinc-400">All data stored locally</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓</span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
-                  <span className="text-zinc-600 dark:text-zinc-400">Works fully offline</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓</span>
-                </div>
-                <div className="flex items-center justify-between p-2.5 rounded bg-zinc-50 dark:bg-[#2D2D4E]">
-                  <span className="text-zinc-600 dark:text-zinc-400">Credentials encrypted</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">✓</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <HomeTabContent
+            onNavigateToFocus={() => setActiveTab('timers')}
+            onNavigateToReminders={() => setActiveTab('reminders')}
+            onNavigateToAI={() => setActiveTab('ai')}
+          />
         )}
 
         {/* Phase 2: Full Local Reminders Interface */}
