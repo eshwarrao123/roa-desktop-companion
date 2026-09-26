@@ -1,9 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Sparkles,
-  Settings,
-  Bell,
-  Bot,
   Move,
   Database,
   ShieldCheck,
@@ -17,7 +13,6 @@ import {
   Plus,
   Search,
   CheckCircle2,
-  Clock,
   Filter,
   Brain,
   PartyPopper,
@@ -26,6 +21,7 @@ import {
   Monitor,
   Keyboard,
   AlertCircle,
+  Clock,
 } from 'lucide-react';
 import { PetMood, PetPosition, CharacterManifest } from '@shared/types/pet';
 import { AppSettings } from '@shared/types/settings';
@@ -37,6 +33,7 @@ import { CharacterCard } from './components/CharacterCard';
 import { TimersTabContent } from './components/TimersTabContent';
 import { AITabContent } from './components/AITabContent';
 import { AIProviderStatus } from '@shared/types/ai';
+import { DashboardShell } from './layout/DashboardShell';
 
 export const DashboardApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'reminders' | 'timers' | 'ai' | 'settings'>('overview');
@@ -303,93 +300,7 @@ export const DashboardApp: React.FC = () => {
 
 
   return (
-    <div className="flex h-screen bg-[#FAFAFA] dark:bg-[#1A1A2E] text-zinc-900 dark:text-zinc-100 overflow-hidden font-sans">
-      {/* Sidebar */}
-      <aside className="w-56 bg-white dark:bg-[#252542] border-r border-zinc-200 dark:border-[#3D3D6B] flex flex-col justify-between p-4 select-none">
-        <div className="space-y-6">
-          {/* Brand */}
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-sm">
-              R
-            </div>
-            <div>
-              <h1 className="font-semibold text-sm leading-none tracking-tight">ROA</h1>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Your Companion</p>
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="space-y-1">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                activeTab === 'overview'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              Overview
-            </button>
-
-            <button
-              onClick={() => setActiveTab('reminders')}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                activeTab === 'reminders'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
-              }`}
-            >
-              <Bell className="w-4 h-4" />
-              Reminders
-            </button>
-
-            <button
-              onClick={() => setActiveTab('timers')}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                activeTab === 'timers'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
-              }`}
-            >
-              <Clock className="w-4 h-4" />
-              Focus
-            </button>
-
-            <button
-              onClick={() => setActiveTab('ai')}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                activeTab === 'ai'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
-              }`}
-            >
-              <Bot className="w-4 h-4" />
-              Ask ROA
-            </button>
-
-            <button
-              onClick={() => setActiveTab('settings')}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                activeTab === 'settings'
-                  ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
-                  : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E]'
-              }`}
-            >
-              <Settings className="w-4 h-4" />
-              Settings
-            </button>
-          </nav>
-        </div>
-
-        {/* Footer */}
-        <div className="pt-4 border-t border-zinc-200 dark:border-[#3D3D6B] px-2 text-[11px] text-zinc-500">
-          <span>Version {appVersion}</span>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto p-8">
+    <DashboardShell activeTab={activeTab} onTabChange={setActiveTab}>
         {!isElectron && (
           <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -930,8 +841,7 @@ export const DashboardApp: React.FC = () => {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </DashboardShell>
   );
 };
 
