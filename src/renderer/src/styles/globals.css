@@ -129,3 +129,22 @@ body {
 .animate-zzz-2 {
   animation: zzz-float 2.5s ease-in-out 1.25s infinite;
 }
+
+/* Gentle bounce for celebration */
+@keyframes bounce-gentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 1s ease-in-out infinite;
+}
+
+/* Subtle bounce for walking */
+.animate-bounce-subtle {
+  animation: bounce-gentle 0.4s ease-in-out infinite;
+}

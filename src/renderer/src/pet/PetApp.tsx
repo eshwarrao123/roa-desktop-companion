@@ -3,7 +3,7 @@ import { PetMood, CharacterManifest } from '@shared/types/pet';
 import { Reminder } from '@shared/types/reminders';
 import { SpriteAnimator } from './SpriteAnimator';
 import { usePetBehavior } from './hooks/usePetBehavior';
-import { Bell, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export const PetApp: React.FC = () => {
   const [character, setCharacter] = useState<CharacterManifest | null>(null);
@@ -155,13 +155,16 @@ export const PetApp: React.FC = () => {
     }
   };
 
-  // Get reminder flair text based on character personality
-  const getReminderFlair = (title: string) => {
-    if (character?.id === 'roa-bunny') {
-      return `🥕 Hop to it! Time for ${title}`;
+  // Get contextual message for companion state
+  const getContextMessage = () => {
+    if (activeReminder) {
+      // Show reminder title only, no emoji or flair
+      return activeReminder.title;
     }
-    return `🐾 Meow! Time for ${title}`;
+    return null;
   };
+
+  const contextMessage = getContextMessage();
 
   return (
     <div
@@ -175,24 +178,26 @@ export const PetApp: React.FC = () => {
       className="w-full h-full flex items-center justify-center bg-transparent select-none draggable-region overflow-hidden"
       title="Drag to reposition • Double-click to cheer up • Right-click for menu"
     >
-      <div className="relative flex flex-col items-center">
-        {/* Reminder Speech Bubble */}
-        {activeReminder && (
-          <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-white/95 dark:bg-[#1A1A2E]/95 backdrop-blur-sm border border-indigo-200 dark:border-indigo-800/80 shadow-lg rounded-xl px-3 py-1.5 flex items-center gap-2 max-w-[190px] animate-bounce z-50 non-draggable">
-            <Bell className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-            <div className="text-[11px] leading-tight font-medium text-zinc-900 dark:text-zinc-100 truncate">
-              {getReminderFlair(activeReminder.title)}
+      <div className="relative flex flex-col items-center gap-2">
+        {/* Contextual Text - Minimal and Close to Character */}
+        {contextMessage && (
+          <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-50 non-draggable">
+            <div className="relative bg-roa-surface/80 backdrop-blur-sm rounded-lg px-2.5 py-1 shadow-sm border border-roa-divider/50">
+              <div className="text-[11px] leading-tight font-medium text-roa-text-primary truncate max-w-[160px]">
+                {contextMessage}
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveReminder(null);
+                  setMood('idle');
+                }}
+                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-roa-surface border border-roa-divider flex items-center justify-center text-roa-text-muted hover:text-roa-text-primary hover:border-roa-sage transition-colors"
+                aria-label="Dismiss"
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveReminder(null);
-                setMood('idle');
-              }}
-              className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-0.5 rounded-full"
-            >
-              <X className="w-3 h-3" />
-            </button>
           </div>
         )}
 

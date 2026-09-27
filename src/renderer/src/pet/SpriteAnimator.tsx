@@ -75,29 +75,23 @@ export const SpriteAnimator: React.FC<SpriteAnimatorProps> = ({
         transform: `scaleX(${walkDirection}) translateY(${walkBob}px)`,
       }}
     >
-      {/* Floating State Effects */}
+      {/* Subtle State Indicators - No Emoji */}
       {effectiveState === 'sleeping' && (
-        <div className="absolute -top-1 right-5 pointer-events-none select-none z-10">
-          <span className="absolute text-indigo-400 font-bold text-xs animate-zzz-1">z</span>
-          <span className="absolute text-indigo-500 font-bold text-sm animate-zzz-2">Z</span>
+        <div className="absolute -top-1 right-5 pointer-events-none select-none z-10 text-roa-text-muted/70">
+          <span className="absolute text-xs animate-zzz-1">z</span>
+          <span className="absolute text-sm animate-zzz-2">Z</span>
         </div>
       )}
 
       {(effectiveState === 'happy' || effectiveState === 'celebrating') && (
-        <div className="absolute -top-2 left-6 pointer-events-none select-none text-amber-400 text-xs animate-bounce z-10">
-          ✦ ✧ ✦
+        <div className="absolute -top-2 left-6 pointer-events-none select-none text-roa-sage/60 text-xs animate-bounce-gentle z-10">
+          ✦
         </div>
       )}
 
       {effectiveState === 'thinking' && (
-        <div className="absolute -top-3 right-8 pointer-events-none select-none text-indigo-500 font-bold text-sm animate-bounce z-10">
-          ?
-        </div>
-      )}
-
-      {effectiveState === 'reminding' && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none select-none text-amber-500 text-base animate-pulse z-10">
-          🔔
+        <div className="absolute -top-2 right-8 pointer-events-none select-none text-roa-text-muted/60 text-xs z-10">
+          ...
         </div>
       )}
 
