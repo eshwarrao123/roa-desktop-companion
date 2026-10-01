@@ -66,15 +66,15 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
                 className={`
                   p-4 rounded-lg border text-left transition-all
                   ${isActive
-                    ? 'bg-roa-surface-tint border-roa-sage ring-1 ring-roa-sage'
-                    : 'bg-roa-surface border-roa-divider hover:border-roa-sage/40'
+                    ? 'bg-roa-raised border-roa-sage ring-1 ring-roa-sage'
+                    : 'bg-roa-surface border-roa-border hover:border-roa-sage/40'
                   }
                   disabled:cursor-default
                 `}
               >
                 <div className="space-y-3">
                   {/* Character Preview - Deferred until final artwork is ready */}
-                  <div className="w-full aspect-square rounded-lg bg-roa-background border border-roa-divider flex items-center justify-center">
+                  <div className="w-full aspect-square rounded-lg bg-roa-background border border-roa-border flex items-center justify-center">
                     <div className="text-center px-4">
                       <div className="text-xs font-medium text-roa-text-secondary mb-0.5">
                         {char.name}
@@ -120,8 +120,8 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
                 px-3 py-2 rounded-lg border text-sm font-medium transition-colors
                 flex items-center gap-2
                 ${mood === option.value
-                  ? 'bg-roa-surface-tint border-roa-sage text-roa-sage'
-                  : 'bg-roa-surface border-roa-divider text-roa-text-secondary hover:border-roa-sage/40'
+                  ? 'bg-roa-raised border-roa-sage text-roa-sage'
+                  : 'bg-roa-surface border-roa-border text-roa-text-secondary hover:border-roa-sage/40'
                 }
               `}
             >
@@ -135,7 +135,7 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
       <Divider />
 
       {/* Companion Behavior */}
-      <div className="space-y-px bg-roa-surface border border-roa-divider rounded-lg divide-y divide-roa-divider">
+      <div className="space-y-px bg-roa-surface border border-roa-border rounded-lg divide-y divide-roa-border">
         <SettingsRow
           label="Companion visible"
           description="Show or hide your floating companion"

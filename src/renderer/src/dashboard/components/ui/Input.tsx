@@ -6,14 +6,15 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 /**
- * ROA Canonical Input Component
+ * ROA Midnight Companion Input Component
  * 
  * Styling:
- * - #FFFDF9 surface background
- * - 1px #E4DED5 border (default)
- * - 1.5px #5F7D66 border (focus)
- * - 8px border radius
+ * - #161A17 raised background
+ * - 1px #303631 border (default)
+ * - 1px #91C4A0 border (focus)
+ * - 6px border radius
  * - 14px body text
+ * - #9BA39D placeholder
  * 
  * Usage:
  * <Input placeholder="Enter reminder title" />
@@ -41,20 +42,20 @@ export const Input: React.FC<InputProps> = ({
       <input
         id={inputId}
         className={`
-          w-full px-3 py-2 text-sm
-          bg-roa-surface text-roa-text-secondary
-          border border-roa-divider rounded-roa
-          placeholder:text-roa-text-light
+          w-full px-3 py-2.5 text-sm h-10
+          bg-roa-raised text-roa-text-primary
+          border border-roa-border rounded-roa
+          placeholder:text-roa-text-muted
           focus:outline-none focus:border-roa-sage focus:ring-1 focus:ring-roa-sage
           disabled:opacity-50 disabled:cursor-not-allowed
-          transition-colors duration-base
-          ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
+          transition-colors duration-200
+          ${error ? 'border-roa-clay focus:border-roa-clay focus:ring-roa-clay' : ''}
           ${className}
         `}
         {...props}
       />
       {error && (
-        <p className="mt-1 text-xs text-red-600">
+        <p className="mt-1 text-xs text-roa-clay">
           {error}
         </p>
       )}

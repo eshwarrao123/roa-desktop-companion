@@ -26,8 +26,8 @@ export const ReminderList: React.FC<ReminderListProps> = ({
 }) => {
   if (reminders.length === 0) {
     return (
-      <div className="border border-dashed border-roa-divider rounded-lg p-12 text-center space-y-3">
-        <div className="w-12 h-12 rounded-full bg-roa-surface-tint mx-auto flex items-center justify-center">
+      <div className="border border-dashed border-roa-border rounded-lg p-12 text-center space-y-3">
+        <div className="w-12 h-12 rounded-full bg-roa-raised mx-auto flex items-center justify-center">
           <Clock className="w-6 h-6 text-roa-text-muted" />
         </div>
         <div>
@@ -43,7 +43,7 @@ export const ReminderList: React.FC<ReminderListProps> = ({
         {!searchQuery && (
           <button
             onClick={onCreateNew}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-roa-primary-sage hover:bg-roa-dark-sage text-roa-surface text-sm font-semibold transition-colors mt-3"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-roa-sage hover:bg-roa-sage-hover text-roa-surface text-sm font-semibold transition-colors mt-3"
           >
             <Plus className="w-4 h-4" />
             Create Reminder
@@ -54,7 +54,7 @@ export const ReminderList: React.FC<ReminderListProps> = ({
   }
 
   return (
-    <div className="bg-roa-surface border border-roa-divider rounded-lg divide-y divide-roa-divider">
+    <div className="bg-roa-surface border border-roa-border rounded-lg divide-y divide-roa-border">
       {reminders.map((reminder) => (
         <ReminderRow
           key={reminder.id}

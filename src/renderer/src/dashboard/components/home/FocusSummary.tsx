@@ -86,23 +86,23 @@ export const FocusSummary: React.FC<FocusSummaryProps> = ({ onNavigateToFocus })
         <h2 className="text-base font-semibold text-roa-text-primary">Focus</h2>
         <button
           onClick={onNavigateToFocus}
-          className="text-xs text-roa-primary-sage hover:text-roa-dark-sage font-medium transition-colors"
+          className="text-xs text-roa-sage hover:text-roa-sage-hover font-medium transition-colors"
         >
           View Focus →
         </button>
       </div>
 
       {activeTimer ? (
-        <div className="bg-roa-surface border border-roa-divider rounded-lg p-5 space-y-4">
+        <div className="bg-roa-surface border border-roa-border rounded-lg p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {activeTimer.type === 'pomodoro' ? (
-                <div className="w-10 h-10 rounded-lg bg-roa-surface-tint flex items-center justify-center">
-                  <Flame className="w-5 h-5 text-roa-primary-sage" />
+                <div className="w-10 h-10 rounded-lg bg-roa-raised flex items-center justify-center">
+                  <Flame className="w-5 h-5 text-roa-sage" />
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-lg bg-roa-surface-tint flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-roa-primary-sage" />
+                <div className="w-10 h-10 rounded-lg bg-roa-raised flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-roa-sage" />
                 </div>
               )}
               <div>
@@ -134,7 +134,7 @@ export const FocusSummary: React.FC<FocusSummaryProps> = ({ onNavigateToFocus })
                   <div
                     key={idx}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
-                      isFilled ? 'bg-roa-primary-sage' : 'bg-roa-divider'
+                      isFilled ? 'bg-roa-sage' : 'bg-roa-border'
                     }`}
                   />
                 );
@@ -143,9 +143,9 @@ export const FocusSummary: React.FC<FocusSummaryProps> = ({ onNavigateToFocus })
           )}
         </div>
       ) : (
-        <div className="bg-roa-surface border border-roa-divider rounded-lg p-5 space-y-3">
+        <div className="bg-roa-surface border border-roa-border rounded-lg p-5 space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-roa-surface-tint flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-roa-raised flex items-center justify-center">
               <PlayCircle className="w-5 h-5 text-roa-text-muted" />
             </div>
             <div>
@@ -155,16 +155,16 @@ export const FocusSummary: React.FC<FocusSummaryProps> = ({ onNavigateToFocus })
           </div>
 
           {completedToday > 0 && (
-            <div className="pt-2 border-t border-roa-divider">
+            <div className="pt-2 border-t border-roa-border">
               <p className="text-xs text-roa-text-muted">
-                <span className="font-semibold text-roa-primary-sage">{completedToday}</span> Pomodoro{completedToday !== 1 ? 's' : ''} completed today
+                <span className="font-semibold text-roa-sage">{completedToday}</span> Pomodoro{completedToday !== 1 ? 's' : ''} completed today
               </p>
             </div>
           )}
 
           <button
             onClick={onNavigateToFocus}
-            className="w-full px-4 py-2.5 rounded-lg border-[1.5px] border-roa-primary-sage text-roa-primary-sage hover:bg-roa-surface-tint text-sm font-semibold transition-colors"
+            className="w-full px-4 py-2.5 rounded-lg border-[1.5px] border-roa-sage text-roa-sage hover:bg-roa-raised text-sm font-semibold transition-colors"
           >
             Start Focus Session
           </button>

@@ -7,16 +7,17 @@ interface SidebarProps {
 }
 
 /**
- * ROA Canonical Sidebar Navigation
+ * ROA Midnight Companion Sidebar Navigation
  * 
  * Visual specifications from DESIGN.md:
  * - 220px fixed width
- * - #FFFDF9 surface background
- * - 1px #E4DED5 right divider
- * - Active: 3px sage left accent, #EEF2EE tint, sage text, 600 weight
- * - Inactive: transparent, muted text, 400 weight
- * - No character illustration in sidebar
- * - "Works offline" footer in micro text
+ * - #0F1210 surface background
+ * - 1px #303631 right divider
+ * - Active: 2px sage left indicator, sage icon/text, weight 500
+ * - Inactive: #9BA39D icon, #D3D9D4 text, weight 500
+ * - ROA wordmark: 16px / 700
+ * - No character illustration
+ * - Version footer
  */
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   const navItems = [
@@ -28,18 +29,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <aside className="w-[220px] bg-roa-surface border-r border-roa-divider flex flex-col h-full select-none">
+    <aside className="w-[220px] bg-roa-surface border-r border-roa-border flex flex-col h-full select-none">
       {/* Header */}
       <div className="p-4">
-        <div className="flex items-center gap-2.5 mb-6 px-2">
-          <div className="w-8 h-8 rounded-lg bg-roa-sage flex items-center justify-center text-white font-bold text-sm shadow-sm">
-            R
-          </div>
-          <div className="flex-1">
-            <h1 className="font-semibold text-sm leading-tight text-roa-text">
-              ROA Desktop Companion
-            </h1>
-          </div>
+        <div className="mb-6 px-2">
+          <h1 className="text-base font-bold text-roa-text-primary tracking-tight">
+            ROA
+          </h1>
         </div>
 
         {/* Navigation */}
@@ -53,19 +49,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
                 className={`
-                  relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg
-                  text-sm transition-all duration-base
+                  relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-roa
+                  text-nav transition-all duration-200
                   ${isActive 
-                    ? 'bg-roa-surface-tint text-roa-sage font-semibold' 
-                    : 'text-roa-text-muted font-normal hover:bg-roa-surface-tint/50 hover:text-roa-text-secondary'
+                    ? 'text-roa-text-primary' 
+                    : 'text-roa-text-secondary hover:bg-roa-text-primary/[0.04]'
                   }
                 `}
               >
                 {/* Active accent bar */}
                 {isActive && (
-                  <div className="absolute left-0 top-1 bottom-1 w-[3px] bg-roa-sage rounded-r" />
+                  <div className="absolute left-0 top-2 bottom-2 w-[2px] bg-roa-sage" />
                 )}
-                <Icon className="w-4 h-4 flex-shrink-0" />
+                <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${isActive ? 'text-roa-text-primary' : 'text-roa-text-muted'}`} />
                 <span className="flex-1 text-left">{item.label}</span>
               </button>
             );
@@ -74,9 +70,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
       </div>
 
       {/* Footer */}
-      <div className="mt-auto p-4 border-t border-roa-divider">
-        <p className="text-micro text-roa-text-light px-2">
-          Works offline
+      <div className="mt-auto p-4 border-t border-roa-border">
+        <p className="text-micro-sm text-roa-text-muted px-2">
+          0.1.2
         </p>
       </div>
     </aside>

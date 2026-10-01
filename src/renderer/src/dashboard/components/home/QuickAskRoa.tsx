@@ -35,15 +35,15 @@ export const QuickAskRoa: React.FC<QuickAskRoaProps> = ({ onNavigateToAI }) => {
     <div className="space-y-3">
       <h2 className="text-base font-semibold text-roa-text-primary">Ask Roa</h2>
 
-      <div className="bg-roa-surface border border-roa-divider rounded-lg p-4 space-y-3">
+      <div className="bg-roa-surface border border-roa-border rounded-lg p-4 space-y-3">
         <div className="flex items-start gap-3">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-            isAvailable ? 'bg-roa-surface-tint' : 'bg-roa-divider/30'
+            isAvailable ? 'bg-roa-surface-tint' : 'bg-roa-border/30'
           }`}>
             {isAvailable ? (
-              <Sparkles className="w-4 h-4 text-roa-primary-sage" />
+              <Sparkles className="w-4 h-4 text-roa-sage" />
             ) : (
-              <MessageCircle className="w-4 h-4 text-roa-text-light-muted" />
+              <MessageCircle className="w-4 h-4 text-roa-text-muted" />
             )}
           </div>
           <div className="flex-1">
@@ -61,7 +61,7 @@ export const QuickAskRoa: React.FC<QuickAskRoaProps> = ({ onNavigateToAI }) => {
         {isAvailable ? (
           <button
             onClick={onNavigateToAI}
-            className="w-full px-4 py-2.5 rounded-lg border border-roa-divider bg-roa-background hover:bg-roa-surface-tint text-roa-text-secondary text-sm font-medium transition-colors text-left flex items-center gap-2"
+            className="w-full px-4 py-2.5 rounded-lg border border-roa-border bg-roa-background hover:bg-roa-raised text-roa-text-secondary text-sm font-medium transition-colors text-left flex items-center gap-2"
           >
             <MessageCircle className="w-4 h-4 text-roa-text-muted" />
             <span>Start a conversation...</span>
@@ -69,7 +69,7 @@ export const QuickAskRoa: React.FC<QuickAskRoaProps> = ({ onNavigateToAI }) => {
         ) : (
           <button
             onClick={onNavigateToAI}
-            className="w-full px-4 py-2.5 rounded-lg border-[1.5px] border-roa-primary-sage text-roa-primary-sage hover:bg-roa-surface-tint text-sm font-semibold transition-colors"
+            className="w-full px-4 py-2.5 rounded-lg border-[1.5px] border-roa-sage text-roa-sage hover:bg-roa-raised text-sm font-semibold transition-colors"
           >
             Open Ask Roa
           </button>

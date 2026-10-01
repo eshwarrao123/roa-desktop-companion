@@ -10,12 +10,12 @@ export const ReminderFilters: React.FC<ReminderFiltersProps> = ({
   onFilterChange,
 }) => {
   return (
-    <div className="flex items-center gap-1 p-1 bg-roa-background border border-roa-divider rounded-lg text-sm">
+    <div className="flex items-center gap-1 p-1 bg-roa-canvas border border-roa-border rounded-lg text-sm">
       <button
         onClick={() => onFilterChange('all')}
         className={`px-3 py-1.5 rounded font-medium transition-colors ${
           currentFilter === 'all'
-            ? 'bg-roa-surface-tint text-roa-primary-sage'
+            ? 'bg-roa-raised text-roa-sage'
             : 'text-roa-text-muted hover:text-roa-text-secondary'
         }`}
       >
@@ -25,7 +25,7 @@ export const ReminderFilters: React.FC<ReminderFiltersProps> = ({
         onClick={() => onFilterChange('active')}
         className={`px-3 py-1.5 rounded font-medium transition-colors ${
           currentFilter === 'active'
-            ? 'bg-roa-surface-tint text-roa-primary-sage'
+            ? 'bg-roa-raised text-roa-sage'
             : 'text-roa-text-muted hover:text-roa-text-secondary'
         }`}
       >
@@ -35,7 +35,7 @@ export const ReminderFilters: React.FC<ReminderFiltersProps> = ({
         onClick={() => onFilterChange('inactive')}
         className={`px-3 py-1.5 rounded font-medium transition-colors ${
           currentFilter === 'inactive'
-            ? 'bg-roa-surface-tint text-roa-primary-sage'
+            ? 'bg-roa-raised text-roa-sage'
             : 'text-roa-text-muted hover:text-roa-text-secondary'
         }`}
       >

@@ -5,18 +5,18 @@ interface PageContainerProps {
 }
 
 /**
- * ROA Canonical Page Container
+ * ROA Midnight Companion Page Container
  * 
  * Main canvas wrapper:
- * - #F7F4EF warm ivory background
- * - Comfortable desktop padding (40px)
+ * - #080A09 dark canvas background
+ * - Comfortable desktop padding (32px)
  * - Natural vertical scrolling
- * - No card-heavy wrappers
+ * - Typography-first, minimal card usage
  */
 export const PageContainer: React.FC<PageContainerProps> = ({ children }) => {
   return (
-    <div className="flex-1 bg-roa-background overflow-auto">
-      <div className="p-10 min-h-full">
+    <div className="flex-1 bg-roa-canvas overflow-auto">
+      <div className="p-roa-margin min-h-full">
         {children}
       </div>
     </div>

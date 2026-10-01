@@ -6,9 +6,9 @@ export interface DividerProps {
 }
 
 /**
- * ROA Canonical Divider Component
+ * ROA Midnight Companion Divider Component
  * 
- * Hairline divider: 1px solid #E4DED5
+ * Hairline divider: 1px solid #303631
  * 
  * Usage:
  * <Divider />
@@ -18,7 +18,7 @@ export const Divider: React.FC<DividerProps> = ({
   className = '',
   orientation = 'horizontal',
 }) => {
-  const baseStyles = 'bg-roa-divider';
+  const baseStyles = 'bg-roa-border';
   
   const orientationStyles = orientation === 'horizontal'
     ? 'h-px w-full'

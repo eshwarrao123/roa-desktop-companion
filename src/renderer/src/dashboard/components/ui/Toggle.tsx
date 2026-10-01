@@ -8,10 +8,11 @@ export interface ToggleProps {
 }
 
 /**
- * ROA Canonical Toggle Component
+ * ROA Midnight Companion Toggle Component
  * 
- * Active state: sage (#5F7D66)
- * Inactive state: muted gray
+ * Active state: sage (#91C4A0) track, white thumb
+ * Inactive state: #303631 track, #9BA39D thumb
+ * Size: 36px × 20px
  * 
  * Usage:
  * <Toggle 
@@ -41,24 +42,24 @@ export const Toggle: React.FC<ToggleProps> = ({
       disabled={disabled}
       className={`
         inline-flex items-center gap-2.5
-        focus:outline-none focus:ring-2 focus:ring-roa-sage focus:ring-offset-2
+        focus:outline-none focus:ring-2 focus:ring-roa-sage focus:ring-offset-2 focus:ring-offset-roa-canvas
         disabled:opacity-50 disabled:cursor-not-allowed
         ${label ? 'cursor-pointer' : ''}
       `}
     >
       <div
         className={`
-          relative inline-flex h-6 w-11 items-center rounded-full
-          transition-colors duration-base ease-spring
-          ${checked ? 'bg-roa-sage' : 'bg-gray-300'}
+          relative inline-flex h-5 w-9 items-center rounded-full
+          transition-colors duration-200
+          ${checked ? 'bg-roa-sage' : 'bg-roa-border'}
           ${disabled ? 'opacity-50' : ''}
         `}
       >
         <span
           className={`
-            inline-block h-4 w-4 transform rounded-full bg-white shadow-sm
-            transition-transform duration-base ease-spring
-            ${checked ? 'translate-x-6' : 'translate-x-1'}
+            inline-block h-3.5 w-3.5 transform rounded-full shadow-sm
+            transition-transform duration-200
+            ${checked ? 'translate-x-[18px] bg-white' : 'translate-x-1 bg-roa-text-muted'}
           `}
         />
       </div>

@@ -63,11 +63,11 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
   const getScheduleIcon = () => {
     switch (reminder.schedule_type) {
       case 'interval':
-        return <Repeat className="w-3.5 h-3.5 text-roa-primary-sage" />;
+        return <Repeat className="w-3.5 h-3.5 text-roa-sage" />;
       case 'daily':
         return <Clock className="w-3.5 h-3.5 text-roa-warm-clay" />;
       case 'weekly':
-        return <CalendarDays className="w-3.5 h-3.5 text-roa-primary-sage" />;
+        return <CalendarDays className="w-3.5 h-3.5 text-roa-sage" />;
       case 'one_time':
         return <Calendar className="w-3.5 h-3.5 text-roa-text-muted" />;
     }
@@ -96,7 +96,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
 
   return (
     <div
-      className={`flex items-center gap-4 py-4 border-b border-roa-divider transition-opacity ${
+      className={`flex items-center gap-4 py-4 border-b border-roa-border transition-opacity ${
         reminder.enabled ? 'opacity-100' : 'opacity-50'
       }`}
     >
@@ -109,8 +109,8 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
         <div
           className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
             reminder.enabled
-              ? 'border-roa-primary-sage bg-roa-primary-sage'
-              : 'border-roa-divider hover:border-roa-primary-sage'
+              ? 'border-roa-sage bg-roa-sage'
+              : 'border-roa-border hover:border-roa-sage'
           }`}
         >
           {reminder.enabled && (
@@ -164,7 +164,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
             <button
               onClick={() => setShowSnoozeMenu(!showSnoozeMenu)}
               title="Snooze"
-              className="p-1.5 rounded hover:bg-roa-surface-tint text-roa-text-muted hover:text-roa-text-secondary transition-colors"
+              className="p-1.5 rounded hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary transition-colors"
             >
               <AlarmClock className="w-4 h-4" />
             </button>
@@ -175,7 +175,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
                   className="fixed inset-0 z-20"
                   onClick={() => setShowSnoozeMenu(false)}
                 />
-                <div className="absolute right-0 top-8 z-30 w-32 bg-roa-surface border border-roa-divider rounded-lg shadow-lg p-1 text-xs">
+                <div className="absolute right-0 top-8 z-30 w-32 bg-roa-surface border border-roa-border rounded-lg shadow-lg p-1 text-xs">
                   <div className="px-2 py-1 text-[10px] uppercase font-bold text-roa-structural-label">
                     Snooze For
                   </div>
@@ -187,7 +187,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
                           onSnooze(reminder.id, mins);
                           setShowSnoozeMenu(false);
                         }}
-                        className="w-full text-left px-2 py-1.5 rounded hover:bg-roa-surface-tint text-roa-text-secondary font-medium transition-colors"
+                        className="w-full text-left px-2 py-1.5 rounded hover:bg-roa-raised text-roa-text-secondary font-medium transition-colors"
                       >
                         {mins < 60 ? `${mins} minutes` : '1 hour'}
                       </button>
@@ -203,7 +203,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
         <button
           onClick={() => onEdit(reminder)}
           title="Edit"
-          className="p-1.5 rounded hover:bg-roa-surface-tint text-roa-text-muted hover:text-roa-text-secondary transition-colors"
+          className="p-1.5 rounded hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary transition-colors"
         >
           <Pencil className="w-4 h-4" />
         </button>
@@ -216,7 +216,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
             }
           }}
           title="Delete"
-          className="p-1.5 rounded hover:bg-roa-surface-tint text-roa-text-muted hover:text-roa-text-secondary transition-colors"
+          className="p-1.5 rounded hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary transition-colors"
         >
           <Trash2 className="w-4 h-4" />
         </button>

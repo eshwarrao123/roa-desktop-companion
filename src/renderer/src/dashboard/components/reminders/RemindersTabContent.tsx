@@ -84,7 +84,7 @@ export const RemindersTabContent: React.FC = () => {
         </div>
         <button
           onClick={handleOpenCreate}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-roa-primary-sage hover:bg-roa-dark-sage text-roa-surface text-sm font-semibold transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-roa-sage hover:bg-roa-sage-hover text-roa-surface text-sm font-semibold transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Reminder
@@ -97,13 +97,13 @@ export const RemindersTabContent: React.FC = () => {
       {/* Search and Filters */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-roa-text-light-muted" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-roa-text-muted" />
           <input
             type="text"
             placeholder="Search reminders..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-roa-divider bg-roa-surface text-sm text-roa-text-secondary placeholder-roa-text-light-muted focus:outline-none focus:border-roa-primary-sage transition-colors"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-roa-border bg-roa-surface text-sm text-roa-text-secondary placeholder-roa-text-muted focus:outline-none focus:border-roa-sage transition-colors"
           />
         </div>
 

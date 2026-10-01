@@ -6,13 +6,13 @@ export interface SectionLabelProps {
 }
 
 /**
- * ROA Canonical Section Label Component
+ * ROA Midnight Companion Section Label Component
  * 
  * Uppercase structural label:
- * - 10px font size
- * - 700 weight
- * - +0.10em letter spacing
- * - #A8A49E color
+ * - 11px font size
+ * - 600 weight
+ * - +0.08em letter spacing
+ * - #9BA39D color (text-muted)
  * - Uppercase text transform
  * 
  * Usage in Settings:
@@ -27,7 +27,7 @@ export const SectionLabel: React.FC<SectionLabelProps> = ({
   className = '',
 }) => {
   return (
-    <h3 className={`text-label uppercase text-roa-label tracking-wider font-bold ${className}`}>
+    <h3 className={`text-micro uppercase text-roa-text-muted tracking-wide font-semibold ${className}`}>
       {children}
     </h3>
   );

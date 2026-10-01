@@ -6,13 +6,13 @@ export interface KeycapBadgeProps {
 }
 
 /**
- * ROA Canonical Keycap Badge Component
+ * ROA Midnight Companion Keycap Badge Component
  * 
  * Displays keyboard shortcuts in compact pill format
  * - 4px border radius
- * - #FFFDF9 surface
- * - 1px #E4DED5 border
- * - Monospace-style display
+ * - #161A17 raised background
+ * - 1px #303631 border
+ * - Monospace typeface (JetBrains Mono, 12px / 500)
  * 
  * Usage:
  * <KeycapBadge keys={['Ctrl', 'Shift', 'Space']} />
@@ -30,8 +30,8 @@ export const KeycapBadge: React.FC<KeycapBadgeProps> = ({
             className="
               inline-flex items-center justify-center
               min-w-[24px] h-6 px-2
-              bg-roa-surface border border-roa-divider rounded-roa-sm
-              text-xs font-medium text-roa-text-secondary
+              bg-roa-raised border border-roa-border rounded-roa-sm
+              text-keycap font-mono font-medium text-roa-text-secondary
               shadow-sm
             "
           >

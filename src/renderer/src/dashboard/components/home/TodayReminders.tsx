@@ -80,25 +80,25 @@ export const TodayReminders: React.FC<TodayRemindersProps> = ({ onNavigateToRemi
         </div>
         <button
           onClick={onNavigateToReminders}
-          className="text-xs text-roa-primary-sage hover:text-roa-dark-sage font-medium transition-colors"
+          className="text-xs text-roa-sage hover:text-roa-sage-hover font-medium transition-colors"
         >
           View All →
         </button>
       </div>
 
       {displayReminders.length > 0 ? (
-        <div className="bg-roa-surface border border-roa-divider rounded-lg divide-y divide-roa-divider">
+        <div className="bg-roa-surface border border-roa-border rounded-lg divide-y divide-roa-border">
           {displayReminders.map((reminder) => (
             <div
               key={reminder.id}
-              className="px-4 py-3 hover:bg-roa-surface-tint/30 transition-colors group"
+              className="px-4 py-3 hover:bg-roa-raised/30 transition-colors group"
             >
               <div className="flex items-start gap-3">
                 <button
                   onClick={() => toggleReminder(reminder.id, false)}
                   className="mt-0.5 flex-shrink-0"
                 >
-                  <Circle className="w-4 h-4 text-roa-text-muted hover:text-roa-primary-sage transition-colors" />
+                  <Circle className="w-4 h-4 text-roa-text-muted hover:text-roa-sage transition-colors" />
                 </button>
                 
                 <div className="flex-1 min-w-0">
@@ -111,12 +111,12 @@ export const TodayReminders: React.FC<TodayRemindersProps> = ({ onNavigateToRemi
                     </p>
                   )}
                   <div className="flex items-center gap-2 mt-1">
-                    <Clock className="w-3 h-3 text-roa-text-light-muted" />
+                    <Clock className="w-3 h-3 text-roa-text-muted" />
                     <span className="text-xs text-roa-text-muted">
                       {formatTime(reminder.next_run_at)}
                     </span>
-                    <span className="text-xs text-roa-text-light-muted">·</span>
-                    <span className="text-xs font-medium text-roa-primary-sage">
+                    <span className="text-xs text-roa-text-muted">·</span>
+                    <span className="text-xs font-medium text-roa-sage">
                       {formatNextDue(reminder.next_run_at)}
                     </span>
                   </div>
@@ -133,9 +133,9 @@ export const TodayReminders: React.FC<TodayRemindersProps> = ({ onNavigateToRemi
           ))}
         </div>
       ) : (
-        <div className="bg-roa-surface border border-roa-divider rounded-lg p-6 text-center space-y-3">
-          <div className="w-10 h-10 rounded-full bg-roa-surface-tint mx-auto flex items-center justify-center">
-            <CheckCircle2 className="w-5 h-5 text-roa-primary-sage" />
+        <div className="bg-roa-surface border border-roa-border rounded-lg p-6 text-center space-y-3">
+          <div className="w-10 h-10 rounded-full bg-roa-raised mx-auto flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-roa-sage" />
           </div>
           <div>
             <p className="text-sm font-medium text-roa-text-secondary">All clear</p>
@@ -145,7 +145,7 @@ export const TodayReminders: React.FC<TodayRemindersProps> = ({ onNavigateToRemi
           </div>
           <button
             onClick={onNavigateToReminders}
-            className="text-xs text-roa-primary-sage hover:text-roa-dark-sage font-medium transition-colors"
+            className="text-xs text-roa-sage hover:text-roa-sage-hover font-medium transition-colors"
           >
             Create a reminder
           </button>

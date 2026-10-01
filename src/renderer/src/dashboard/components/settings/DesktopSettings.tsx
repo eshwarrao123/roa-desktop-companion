@@ -29,7 +29,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
     <div className="space-y-6">
       <SectionLabel>DESKTOP</SectionLabel>
 
-      <div className="space-y-px bg-roa-surface border border-roa-divider rounded-lg divide-y divide-roa-divider">
+      <div className="space-y-px bg-roa-surface border border-roa-border rounded-lg divide-y divide-roa-border">
         <SettingsRow
           label="Launch at startup"
           description="Open ROA automatically when Windows starts"
@@ -69,7 +69,7 @@ export const DesktopSettings: React.FC<DesktopSettingsProps> = ({
                 max="50"
                 value={lowBatteryThreshold}
                 onChange={(e) => onLowBatteryThresholdChange(parseInt(e.target.value, 10) || 20)}
-                className="w-16 px-2 py-1 text-xs text-center font-mono bg-roa-surface border border-roa-divider rounded-roa-sm focus:outline-none focus:border-roa-sage focus:ring-1 focus:ring-roa-sage"
+                className="w-16 px-2 py-1 text-xs text-center font-mono bg-roa-surface border border-roa-border rounded-roa-sm focus:outline-none focus:border-roa-sage focus:ring-1 focus:ring-roa-sage"
               />
               <span className="text-xs text-roa-text-muted">%</span>
             </div>

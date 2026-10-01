@@ -87,7 +87,7 @@ export const AISettings: React.FC<AISettingsProps> = ({
       <SectionLabel>AI ASSISTANT</SectionLabel>
 
       {/* AI Enable/Disable */}
-      <div className="bg-roa-surface border border-roa-divider rounded-lg p-4">
+      <div className="bg-roa-surface border border-roa-border rounded-lg p-4">
         <SettingsRow
           label="AI assistant"
           description="Powered by Google Gemini with your API key"
@@ -101,7 +101,7 @@ export const AISettings: React.FC<AISettingsProps> = ({
       </div>
 
       {/* API Key Configuration */}
-      <div className="bg-roa-surface border border-roa-divider rounded-lg p-4 space-y-4">
+      <div className="bg-roa-surface border border-roa-border rounded-lg p-4 space-y-4">
         <div>
           <div className="text-sm font-medium text-roa-text-primary mb-1">
             API Key
@@ -116,7 +116,7 @@ export const AISettings: React.FC<AISettingsProps> = ({
         {aiMaskedKey && !isEditingKey ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <code className="flex-1 px-3 py-2 text-xs font-mono bg-roa-background border border-roa-divider rounded-roa text-roa-text-muted">
+              <code className="flex-1 px-3 py-2 text-xs font-mono bg-roa-canvas border border-roa-border rounded-roa text-roa-text-muted">
                 {aiMaskedKey}
               </code>
               <Button
@@ -145,7 +145,7 @@ export const AISettings: React.FC<AISettingsProps> = ({
                 onChange={(e) => setInputKey(e.target.value)}
                 placeholder="AIzaSy..."
                 disabled={!isElectron}
-                className="w-full px-3 py-2 pr-10 text-sm font-mono bg-roa-surface border border-roa-divider rounded-roa placeholder:text-roa-text-light focus:outline-none focus:border-roa-sage focus:ring-1 focus:ring-roa-sage disabled:opacity-50"
+                className="w-full px-3 py-2 pr-10 text-sm font-mono bg-roa-surface border border-roa-border rounded-roa placeholder:text-roa-text-muted focus:outline-none focus:border-roa-sage focus:ring-1 focus:ring-roa-sage disabled:opacity-50"
               />
               <button
                 type="button"
@@ -193,10 +193,10 @@ export const AISettings: React.FC<AISettingsProps> = ({
           <div
             className={`text-xs p-3 rounded-lg border ${
               aiFeedback.includes('successfully') || aiFeedback.includes('verified') || aiFeedback.includes('saved')
-                ? 'bg-roa-surface-tint border-roa-sage text-roa-sage'
+                ? 'bg-roa-raised border-roa-sage text-roa-sage'
                 : aiFeedback.includes('limit') || aiFeedback.includes('unavailable') || aiFeedback.includes('rate')
                 ? 'bg-amber-50 border-amber-200 text-amber-800'
-                : 'bg-roa-background border-roa-divider text-roa-text-secondary'
+                : 'bg-roa-canvas border-roa-border text-roa-text-secondary'
             }`}
           >
             {aiFeedback}
@@ -205,7 +205,7 @@ export const AISettings: React.FC<AISettingsProps> = ({
       </div>
 
       {/* Connection Status */}
-      <div className="bg-roa-surface border border-roa-divider rounded-lg divide-y divide-roa-divider">
+      <div className="bg-roa-surface border border-roa-border rounded-lg divide-y divide-roa-border">
         <div className="p-4">
           <div className="text-sm font-medium text-roa-text-primary mb-3">
             Status

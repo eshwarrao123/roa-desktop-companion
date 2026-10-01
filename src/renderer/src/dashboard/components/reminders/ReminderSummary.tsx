@@ -26,7 +26,7 @@ export const ReminderSummary: React.FC<ReminderSummaryProps> = ({ reminders }) =
     <div className="flex items-center gap-6 text-sm">
       <div>
         <span className="text-roa-text-muted">Active</span>
-        <span className="ml-2 font-semibold text-roa-primary-sage">{activeCount}</span>
+        <span className="ml-2 font-semibold text-roa-sage">{activeCount}</span>
       </div>
       
       <div>

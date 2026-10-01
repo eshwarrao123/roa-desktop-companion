@@ -11,14 +11,14 @@ export interface StatusPipProps {
 }
 
 /**
- * ROA Canonical Status Pip Component
+ * ROA Midnight Companion Status Pip Component
  * 
- * Small circular indicator for status/connection states
+ * Small circular indicator for status/connection states (6px diameter)
  * 
  * Colors:
- * - sage: #5F7D66 (connected, active, verified)
- * - clay: #D29A6A (warning, attention)
- * - gray: #747970 (inactive, disabled)
+ * - sage: #91C4A0 (connected, active, verified)
+ * - clay: #D59A70 (warning, attention, overdue)
+ * - gray: #9BA39D (inactive, disabled)
  * - red: error state
  * 
  * Usage:
@@ -35,12 +35,12 @@ export const StatusPip: React.FC<StatusPipProps> = ({
     sage: 'bg-roa-sage',
     clay: 'bg-roa-clay',
     gray: 'bg-roa-text-muted',
-    red: 'bg-red-500',
+    red: 'bg-roa-clay',
   };
   
   const sizeStyles = {
-    sm: 'w-2 h-2',
-    md: 'w-3 h-3',
+    sm: 'w-1.5 h-1.5',
+    md: 'w-2 h-2',
   };
   
   return (
@@ -50,7 +50,7 @@ export const StatusPip: React.FC<StatusPipProps> = ({
         aria-hidden="true"
       />
       {label && (
-        <span className="text-sm text-roa-text-secondary">
+        <span className="text-secondary text-roa-text-secondary">
           {label}
         </span>
       )}

@@ -39,12 +39,12 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ statusInfo }) => {
           Assistant Status
         </h4>
         
-        <div className="bg-roa-surface border border-roa-divider rounded-lg p-3 space-y-2">
+        <div className="bg-roa-surface border border-roa-border rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${
               isConfigured && isAvailable 
-                ? 'bg-roa-primary-sage' 
-                : 'bg-roa-text-light-muted'
+                ? 'bg-roa-sage' 
+                : 'bg-roa-text-muted'
             }`} />
             <span className="text-xs font-medium text-roa-text-secondary">
               {isConfigured && isAvailable 
@@ -74,13 +74,13 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ statusInfo }) => {
             {upcomingReminders.map((reminder) => (
               <div
                 key={reminder.id}
-                className="bg-roa-surface border border-roa-divider rounded-lg p-2.5 space-y-1"
+                className="bg-roa-surface border border-roa-border rounded-lg p-2.5 space-y-1"
               >
                 <p className="text-xs font-medium text-roa-text-secondary truncate">
                   {reminder.title}
                 </p>
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-roa-text-light-muted" />
+                  <Clock className="w-3 h-3 text-roa-text-muted" />
                   <span className="text-xs text-roa-text-muted">
                     {formatTime(reminder.next_run_at)}
                   </span>
@@ -97,9 +97,9 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ statusInfo }) => {
           Today
         </h4>
         
-        <div className="bg-roa-surface border border-roa-divider rounded-lg p-3 space-y-2">
+        <div className="bg-roa-surface border border-roa-border rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-3.5 h-3.5 text-roa-primary-sage" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-roa-sage" />
             <span className="text-xs text-roa-text-muted">
               {new Date().toLocaleDateString('en-US', { 
                 weekday: 'long',

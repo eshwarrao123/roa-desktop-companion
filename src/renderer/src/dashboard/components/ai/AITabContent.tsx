@@ -117,16 +117,16 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
       {/* Main conversation area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-roa-divider">
+        <div className="flex items-center justify-between pb-4 border-b border-roa-border">
           <div className="flex items-center gap-3">
             <h2 className="text-2xl font-semibold text-roa-text-primary">Ask Roa</h2>
             <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
               isFullyAvailable
-                ? 'bg-roa-surface-tint text-roa-primary-sage border border-roa-primary-sage/20'
-                : 'bg-roa-divider/30 text-roa-text-muted border border-roa-divider'
+                ? 'bg-roa-raised text-roa-sage border border-roa-sage/20'
+                : 'bg-roa-border/30 text-roa-text-muted border border-roa-border'
             }`}>
               <div className={`w-1.5 h-1.5 rounded-full ${
-                isFullyAvailable ? 'bg-roa-primary-sage' : 'bg-roa-text-muted'
+                isFullyAvailable ? 'bg-roa-sage' : 'bg-roa-text-muted'
               }`} />
               {isFullyAvailable ? 'Connected' : isConfigured ? 'Ready' : 'Offline'}
             </div>
@@ -135,7 +135,7 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
           {messages.length > 0 && (
             <button
               onClick={handleClearChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-roa-divider hover:bg-roa-surface-tint text-roa-text-muted hover:text-roa-text-secondary text-xs transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-roa-border hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary text-xs transition-colors"
               title="Clear conversation"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -192,9 +192,9 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
 
         {/* Unconfigured Notice */}
         {isElectron && !isConfigured && (
-          <div className="mt-4 p-4 rounded-lg bg-roa-surface-tint border border-roa-divider flex items-center justify-between">
+          <div className="mt-4 p-4 rounded-lg bg-roa-raised border border-roa-border flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <Sparkles className="w-4 h-4 text-roa-primary-sage shrink-0" />
+              <Sparkles className="w-4 h-4 text-roa-sage shrink-0" />
               <span className="text-xs text-roa-text-secondary">
                 Add your Google Gemini API key in Settings to activate natural-language reminders, timers, and chat.
               </span>
@@ -202,7 +202,7 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
             {onNavigateToSettings && (
               <button
                 onClick={onNavigateToSettings}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border-[1.5px] border-roa-primary-sage text-roa-primary-sage hover:bg-roa-surface-tint text-xs font-semibold shrink-0 ml-3 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border-[1.5px] border-roa-sage text-roa-sage hover:bg-roa-raised text-xs font-semibold shrink-0 ml-3 transition-colors"
               >
                 Setup Key
                 <ArrowRight className="w-3.5 h-3.5" />
