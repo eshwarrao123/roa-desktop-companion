@@ -22,11 +22,11 @@ export const GreetingSection: React.FC<GreetingSectionProps> = ({ userName = 'th
   };
 
   return (
-    <div className="space-y-2">
-      <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-roa-text-primary">
+    <div className="space-y-1">
+      <h1 className="text-page-title text-roa-text-primary">
         {getGreeting()}, {userName}
       </h1>
-      <p className="text-sm text-roa-text-muted">
+      <p className="text-secondary text-roa-text-muted">
         {getFormattedDate()}
       </p>
     </div>

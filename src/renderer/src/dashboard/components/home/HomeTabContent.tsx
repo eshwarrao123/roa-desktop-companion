@@ -2,7 +2,8 @@ import React from 'react';
 import { GreetingSection } from './GreetingSection';
 import { FocusSummary } from './FocusSummary';
 import { TodayReminders } from './TodayReminders';
-import { QuickAskRoa } from './QuickAskRoa';
+import { ComingUp } from './ComingUp';
+import { QuickActions } from './QuickActions';
 
 interface HomeTabContentProps {
   onNavigateToFocus: () => void;
@@ -16,21 +17,26 @@ export const HomeTabContent: React.FC<HomeTabContentProps> = ({
   onNavigateToAI,
 }) => {
   return (
-    <div className="max-w-5xl space-y-8">
-      {/* Greeting Section */}
+    <div className="max-w-6xl">
+      {/* Greeting spans full width */}
       <GreetingSection />
 
-      {/* Two-column layout for main content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column: Focus */}
+      {/* Two-column desktop layout */}
+      <div className="mt-8 grid grid-cols-[1fr_300px] gap-12">
+        {/* Left Column: Focus + Today */}
         <div className="space-y-8">
           <FocusSummary onNavigateToFocus={onNavigateToFocus} />
-          <QuickAskRoa onNavigateToAI={onNavigateToAI} />
+          <TodayReminders onNavigateToReminders={onNavigateToReminders} />
         </div>
 
-        {/* Right Column: Reminders */}
-        <div>
-          <TodayReminders onNavigateToReminders={onNavigateToReminders} />
+        {/* Right Column: Coming Up + Quick Actions */}
+        <div className="space-y-8">
+          <ComingUp />
+          <QuickActions
+            onNavigateToFocus={onNavigateToFocus}
+            onNavigateToReminders={onNavigateToReminders}
+            onNavigateToAI={onNavigateToAI}
+          />
         </div>
       </div>
     </div>
