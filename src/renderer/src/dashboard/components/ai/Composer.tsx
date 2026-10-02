@@ -39,7 +39,7 @@ export const Composer: React.FC<ComposerProps> = ({
 
   return (
     <div className="border-t border-roa-border pt-4">
-      <div className="flex items-end gap-3 bg-roa-surface border border-roa-border rounded-lg p-3 focus-within:border-roa-sage transition-colors">
+      <div className="flex items-end gap-3 bg-roa-raised border border-roa-border rounded-roa p-3 focus-within:border-roa-sage transition-colors">
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -47,7 +47,7 @@ export const Composer: React.FC<ComposerProps> = ({
           disabled={disabled || isLoading}
           placeholder={getPlaceholder()}
           rows={1}
-          className="flex-1 bg-transparent text-sm text-roa-text-secondary placeholder-roa-text-muted focus:outline-none disabled:opacity-50 resize-none min-h-[24px] max-h-[120px]"
+          className="flex-1 bg-transparent text-body text-roa-text-primary placeholder-roa-text-muted focus:outline-none disabled:opacity-50 resize-none min-h-[24px] max-h-[120px]"
           style={{
             height: 'auto',
             overflowY: value.split('\n').length > 3 ? 'auto' : 'hidden'
@@ -57,7 +57,7 @@ export const Composer: React.FC<ComposerProps> = ({
         <button
           onClick={onSend}
           disabled={!value.trim() || isLoading || disabled}
-          className="p-2 rounded-lg bg-roa-sage hover:bg-roa-sage-hover disabled:opacity-30 disabled:hover:bg-roa-sage text-roa-surface transition-colors flex-shrink-0"
+          className="p-2.5 rounded-roa bg-roa-sage hover:bg-roa-sage-hover disabled:opacity-30 disabled:hover:bg-roa-sage text-roa-canvas transition-colors flex-shrink-0"
           title="Send message (Enter)"
         >
           <Send className="w-4 h-4" />

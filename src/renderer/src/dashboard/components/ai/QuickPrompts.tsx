@@ -13,9 +13,7 @@ export const QuickPrompts: React.FC<QuickPromptsProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <h4 className="text-[10px] font-bold uppercase tracking-wider text-roa-structural-label">
-        Quick Actions
-      </h4>
+      <p className="text-micro uppercase text-roa-text-muted">Quick Actions</p>
       
       <div className="space-y-1.5">
         {prompts.map((prompt, idx) => (
@@ -23,7 +21,7 @@ export const QuickPrompts: React.FC<QuickPromptsProps> = ({
             key={idx}
             onClick={() => onSelectPrompt(prompt.query)}
             disabled={disabled}
-            className="w-full text-left px-3 py-2 rounded-lg bg-roa-surface border border-roa-border hover:border-roa-sage hover:bg-roa-raised transition-colors disabled:opacity-50 disabled:hover:border-roa-border disabled:hover:bg-roa-surface group"
+            className="w-full text-left px-3 py-2 rounded-roa bg-roa-surface border border-roa-border hover:border-roa-sage hover:bg-roa-raised transition-colors disabled:opacity-50 disabled:hover:border-roa-border disabled:hover:bg-roa-surface group"
           >
             <span className="text-xs font-medium text-roa-text-secondary block group-hover:text-roa-sage transition-colors">
               {prompt.label}

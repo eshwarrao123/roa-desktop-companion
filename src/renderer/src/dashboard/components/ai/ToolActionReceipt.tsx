@@ -11,7 +11,7 @@ export const ToolActionReceipt: React.FC<ToolActionReceiptProps> = ({ activity }
   const isRunning = activity.status === 'running';
 
   return (
-    <div className="flex items-start gap-2 py-2 border-t border-roa-divider">
+    <div className="flex items-start gap-2 py-2 border-t border-roa-border">
       {isRunning && <Loader2 className="w-3.5 h-3.5 text-roa-sage animate-spin mt-0.5 flex-shrink-0" />}
       {isCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-roa-sage mt-0.5 flex-shrink-0" />}
       

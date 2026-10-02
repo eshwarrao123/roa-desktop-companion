@@ -4,7 +4,6 @@ import { MessageRow } from './MessageRow';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { ToolActionReceipt } from './ToolActionReceipt';
 import { QuickPrompts } from './QuickPrompts';
-import { Sparkles } from 'lucide-react';
 
 interface ConversationViewProps {
   messages: AIMessage[];
@@ -36,21 +35,17 @@ export const ConversationView: React.FC<ConversationViewProps> = ({
   return (
     <div className="flex-1 overflow-y-auto pr-2 space-y-6">
       {messages.length === 0 ? (
-        <div className="h-full flex flex-col items-center justify-center space-y-6 py-12">
-          <div className="w-12 h-12 rounded-full bg-roa-raised flex items-center justify-center">
-            <Sparkles className="w-6 h-6 text-roa-sage" />
-          </div>
-          
-          <div className="text-center space-y-2 max-w-md">
-            <h3 className="text-base font-semibold text-roa-text-primary">
-              How can Roa help today?
+        <div className="h-full flex flex-col items-start justify-center space-y-6 py-12 max-w-2xl">
+          <div className="space-y-2">
+            <h3 className="text-section-title text-roa-text-primary">
+              What can Roa help with?
             </h3>
-            <p className="text-sm text-roa-text-muted">
+            <p className="text-body text-roa-text-secondary max-w-lg">
               Ask me to set reminders, start timers, check battery levels, or summarize your day.
             </p>
           </div>
 
-          <div className="w-full max-w-md pt-2">
+          <div className="w-full max-w-md">
             <QuickPrompts 
               prompts={quickPrompts}
               onSelectPrompt={onSelectPrompt}

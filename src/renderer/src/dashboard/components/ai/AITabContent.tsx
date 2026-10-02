@@ -3,6 +3,7 @@ import { AIMessage, AIStatusInfo, ToolActivity } from '@shared/types/ai';
 import { ConversationView } from './ConversationView';
 import { Composer } from './Composer';
 import { ContextPanel } from './ContextPanel';
+import { StatusPip } from '../ui/StatusPip';
 import { AlertCircle, WifiOff, Trash2, ArrowRight, Sparkles } from 'lucide-react';
 
 interface AITabContentProps {
@@ -113,29 +114,24 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
   const isTemporarilyUnavailable = serviceStatus === 'temporarily_unavailable';
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-140px)] max-w-7xl mx-auto">
+    <div className="flex gap-8 h-[calc(100vh-140px)] max-w-7xl">
       {/* Main conversation area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-roa-border">
           <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-semibold text-roa-text-primary">Ask Roa</h2>
-            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-              isFullyAvailable
-                ? 'bg-roa-raised text-roa-sage border border-roa-sage/20'
-                : 'bg-roa-border/30 text-roa-text-muted border border-roa-border'
-            }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${
-                isFullyAvailable ? 'bg-roa-sage' : 'bg-roa-text-muted'
-              }`} />
-              {isFullyAvailable ? 'Connected' : isConfigured ? 'Ready' : 'Offline'}
-            </div>
+            <h2 className="text-page-title-sm text-roa-text-primary">Ask Roa</h2>
+            <StatusPip
+              color={isFullyAvailable ? 'sage' : 'gray'}
+              size="sm"
+              label={isFullyAvailable ? 'Connected' : isConfigured ? 'Ready' : 'Offline'}
+            />
           </div>
 
           {messages.length > 0 && (
             <button
               onClick={handleClearChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-roa-border hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary text-xs transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-roa border border-roa-border hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary text-xs transition-colors"
               title="Clear conversation"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -146,8 +142,8 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
 
         {/* Browser Environment Notice */}
         {!isElectron && (
-          <div className="mt-4 p-4 rounded-lg bg-amber-50/50 border border-roa-warm-clay/20 flex items-start gap-3">
-            <AlertCircle className="w-4 h-4 text-roa-warm-clay shrink-0 mt-0.5" />
+          <div className="mt-4 p-4 rounded-roa bg-roa-raised border border-roa-clay/20 flex items-start gap-3">
+            <AlertCircle className="w-4 h-4 text-roa-clay shrink-0 mt-0.5" />
             <div className="text-xs">
               <span className="font-semibold text-roa-text-primary block">
                 Desktop Application Required
@@ -161,8 +157,8 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
 
         {/* Daily Quota Notice */}
         {isElectron && isConfigured && isDailyQuota && (
-          <div className="mt-4 p-4 rounded-lg bg-amber-50/50 border border-roa-warm-clay/20 flex items-start gap-3">
-            <AlertCircle className="w-4 h-4 text-roa-warm-clay shrink-0 mt-0.5" />
+          <div className="mt-4 p-4 rounded-roa bg-roa-raised border border-roa-clay/20 flex items-start gap-3">
+            <AlertCircle className="w-4 h-4 text-roa-clay shrink-0 mt-0.5" />
             <div className="text-xs">
               <span className="font-semibold text-roa-text-primary block">
                 Daily Limit Reached
@@ -177,8 +173,8 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
 
         {/* Temporarily Unavailable Notice */}
         {isElectron && isConfigured && isTemporarilyUnavailable && (
-          <div className="mt-4 p-4 rounded-lg bg-amber-50/50 border border-roa-warm-clay/20 flex items-start gap-3">
-            <WifiOff className="w-4 h-4 text-roa-warm-clay shrink-0 mt-0.5" />
+          <div className="mt-4 p-4 rounded-roa bg-roa-raised border border-roa-clay/20 flex items-start gap-3">
+            <WifiOff className="w-4 h-4 text-roa-clay shrink-0 mt-0.5" />
             <div className="text-xs">
               <span className="font-semibold text-roa-text-primary block">
                 Service Temporarily Unavailable
@@ -192,7 +188,7 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
 
         {/* Unconfigured Notice */}
         {isElectron && !isConfigured && (
-          <div className="mt-4 p-4 rounded-lg bg-roa-raised border border-roa-border flex items-center justify-between">
+          <div className="mt-4 p-4 rounded-roa bg-roa-raised border border-roa-border flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Sparkles className="w-4 h-4 text-roa-sage shrink-0" />
               <span className="text-xs text-roa-text-secondary">
@@ -202,7 +198,7 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
             {onNavigateToSettings && (
               <button
                 onClick={onNavigateToSettings}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border-[1.5px] border-roa-sage text-roa-sage hover:bg-roa-raised text-xs font-semibold shrink-0 ml-3 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-roa border border-roa-sage text-roa-sage hover:bg-roa-raised text-xs font-semibold shrink-0 ml-3 transition-colors"
               >
                 Setup Key
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -236,7 +232,7 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
       </div>
 
       {/* Right context panel */}
-      <div className="w-64 flex-shrink-0 py-6">
+      <div className="w-[260px] flex-shrink-0 py-6">
         <ContextPanel statusInfo={statusInfo} />
       </div>
     </div>
