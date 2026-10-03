@@ -134,14 +134,17 @@ export const FocusTabContent: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full max-w-[840px] mx-auto pt-roa-margin px-roa-gutter space-y-8">
       {/* Page Header */}
       <div>
-        <h2 className="text-2xl font-semibold text-roa-text-primary">Focus</h2>
-        <p className="text-sm text-roa-text-muted mt-1">
+        <h1 className="text-page-title text-roa-text-primary">Focus</h1>
+        <p className="text-secondary text-roa-text-secondary mt-1">
           Stay focused with timers and Pomodoro sessions
         </p>
       </div>
+
+      {/* Breathing space before timer */}
+      <div className="h-8" />
 
       {/* Timer Display - Visual Anchor */}
       <TimerDisplay timer={activeTimer} displaySeconds={displaySeconds} />
@@ -166,7 +169,7 @@ export const FocusTabContent: React.FC = () => {
       <PomodoroCycle pomodoroState={pomodoroState} />
 
       {/* Divider */}
-      <div className="border-t border-roa-divider" />
+      <div className="border-t border-roa-border my-9" />
 
       {/* Quick Presets */}
       <QuickPresets onSelectPreset={handleStartPreset} />

@@ -17,9 +17,9 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({ timer, displaySecond
     if (!timer) return 'Ready to focus';
     if (timer.type === 'pomodoro' && timer.pomodoro_phase) {
       const phaseLabels = {
-        focus: 'Focus session',
-        short_break: 'Short break',
-        long_break: 'Long break',
+        focus: 'Deep Work',
+        short_break: 'Short Break',
+        long_break: 'Long Break',
       };
       return phaseLabels[timer.pomodoro_phase];
     }
@@ -27,19 +27,19 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({ timer, displaySecond
   };
 
   return (
-    <div className="text-center space-y-4 py-8">
-      <p className="text-sm font-medium text-roa-text-muted uppercase tracking-wide">
+    <div className="text-center space-y-6 py-4">
+      <p className="text-micro text-roa-text-muted uppercase tracking-wider">
         {getStateLabel()}
       </p>
       
-      <div className="font-mono text-[80px] font-bold leading-none tracking-tight text-roa-text-primary">
+      <div className="text-timer-display text-roa-text-primary" style={{ fontVariantNumeric: 'tabular-nums' }}>
         {formatTime(displaySeconds)}
       </div>
       
       {timer && timer.state === 'running' && (
-        <div className="w-64 h-1 bg-roa-border rounded-full mx-auto overflow-hidden">
+        <div className="w-80 h-0.5 bg-roa-border mx-auto overflow-hidden">
           <div
-            className="h-full bg-roa-sage rounded-full transition-all duration-1000 ease-linear"
+            className="h-full bg-roa-sage transition-all duration-1000 ease-linear"
             style={{
               width: `${Math.min(100, Math.max(0, ((Math.ceil(timer.duration_ms / 1000) - displaySeconds) / Math.ceil(timer.duration_ms / 1000)) * 100))}%`
             }}

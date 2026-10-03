@@ -12,8 +12,8 @@ export const PomodoroCycle: React.FC<PomodoroCycleProps> = ({ pomodoroState }) =
   const cycleNumber = currentInFour + 1;
 
   return (
-    <div className="flex items-center justify-center gap-3 py-4">
-      <span className="text-sm font-medium text-roa-text-muted">
+    <div className="flex items-center justify-center gap-4 pt-2">
+      <span className="text-secondary text-roa-text-secondary font-medium">
         Cycle {cycleNumber} of 4
       </span>
       
@@ -23,7 +23,7 @@ export const PomodoroCycle: React.FC<PomodoroCycleProps> = ({ pomodoroState }) =
           return (
             <div
               key={idx}
-              className={`h-1.5 w-8 rounded-full transition-colors ${
+              className={`h-1.5 w-8 transition-colors ${
                 isFilled ? 'bg-roa-sage' : 'bg-roa-border'
               }`}
             />

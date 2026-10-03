@@ -12,10 +12,10 @@ export const BreakControls: React.FC<BreakControlsProps> = ({
   onStartLongBreak,
 }) => {
   return (
-    <div className="flex items-center justify-center gap-3 pt-4">
+    <div className="flex items-center justify-center gap-3">
       <button
         onClick={onStartShortBreak}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-roa-border bg-roa-surface hover:bg-roa-raised text-roa-text-secondary text-sm font-medium transition-colors"
+        className="h-9 flex items-center gap-2 px-4 rounded-roa border border-roa-border bg-transparent hover:bg-roa-raised text-roa-text-secondary text-secondary font-medium transition-colors"
       >
         <Coffee className="w-3.5 h-3.5" />
         Short Break
@@ -23,7 +23,7 @@ export const BreakControls: React.FC<BreakControlsProps> = ({
 
       <button
         onClick={onStartLongBreak}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-roa-border bg-roa-surface hover:bg-roa-raised text-roa-text-secondary text-sm font-medium transition-colors"
+        className="h-9 flex items-center gap-2 px-4 rounded-roa border border-roa-border bg-transparent hover:bg-roa-raised text-roa-text-secondary text-secondary font-medium transition-colors"
       >
         <Sparkles className="w-3.5 h-3.5" />
         Long Break
