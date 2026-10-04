@@ -10,12 +10,12 @@ export const ReminderFilters: React.FC<ReminderFiltersProps> = ({
   onFilterChange,
 }) => {
   return (
-    <div className="flex items-center gap-1 p-1 bg-roa-canvas border border-roa-border rounded-lg text-sm">
+    <div className="flex items-center gap-1 p-1 bg-roa-raised border border-roa-border rounded-roa">
       <button
         onClick={() => onFilterChange('all')}
-        className={`px-3 py-1.5 rounded font-medium transition-colors ${
+        className={`h-8 px-3 rounded-roa-sm text-secondary font-medium transition-colors ${
           currentFilter === 'all'
-            ? 'bg-roa-raised text-roa-sage'
+            ? 'bg-roa-canvas text-roa-text-primary'
             : 'text-roa-text-muted hover:text-roa-text-secondary'
         }`}
       >
@@ -23,9 +23,9 @@ export const ReminderFilters: React.FC<ReminderFiltersProps> = ({
       </button>
       <button
         onClick={() => onFilterChange('active')}
-        className={`px-3 py-1.5 rounded font-medium transition-colors ${
+        className={`h-8 px-3 rounded-roa-sm text-secondary font-medium transition-colors ${
           currentFilter === 'active'
-            ? 'bg-roa-raised text-roa-sage'
+            ? 'bg-roa-canvas text-roa-text-primary'
             : 'text-roa-text-muted hover:text-roa-text-secondary'
         }`}
       >
@@ -33,9 +33,9 @@ export const ReminderFilters: React.FC<ReminderFiltersProps> = ({
       </button>
       <button
         onClick={() => onFilterChange('inactive')}
-        className={`px-3 py-1.5 rounded font-medium transition-colors ${
+        className={`h-8 px-3 rounded-roa-sm text-secondary font-medium transition-colors ${
           currentFilter === 'inactive'
-            ? 'bg-roa-raised text-roa-sage'
+            ? 'bg-roa-canvas text-roa-text-primary'
             : 'text-roa-text-muted hover:text-roa-text-secondary'
         }`}
       >

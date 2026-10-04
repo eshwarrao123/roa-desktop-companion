@@ -23,24 +23,23 @@ export const ReminderSummary: React.FC<ReminderSummaryProps> = ({ reminders }) =
   };
 
   return (
-    <div className="flex items-center gap-6 text-sm">
-      <div>
-        <span className="text-roa-text-muted">Active</span>
-        <span className="ml-2 font-semibold text-roa-sage">{activeCount}</span>
-      </div>
-      
-      <div>
-        <span className="text-roa-text-muted">Total</span>
-        <span className="ml-2 font-semibold text-roa-text-primary">{totalCount}</span>
+    <div className="flex items-center gap-4 text-secondary">
+      <div className="flex items-center gap-1.5">
+        <span className="text-roa-text-muted">{activeCount} active</span>
+        <span className="text-roa-text-muted">·</span>
+        <span className="text-roa-text-muted">{totalCount} total</span>
       </div>
       
       {nextReminder && (
-        <div>
-          <span className="text-roa-text-muted">Coming up</span>
-          <span className="ml-2 font-semibold text-roa-text-primary">
-            {formatNextTime(nextReminder.next_run_at)}
-          </span>
-        </div>
+        <>
+          <span className="text-roa-text-muted">·</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-roa-text-muted">Next:</span>
+            <span className="font-medium text-roa-text-secondary">
+              {formatNextTime(nextReminder.next_run_at)}
+            </span>
+          </div>
+        </>
       )}
     </div>
   );

@@ -73,37 +73,37 @@ export const RemindersTabContent: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
+    <div className="w-full max-w-[840px] mx-auto pt-roa-margin px-roa-gutter space-y-6">
+      {/* Header with Summary */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-roa-text-primary">Reminders</h2>
-          <p className="text-sm text-roa-text-muted mt-1">
-            Your reminders work offline and stay private on this device
+          <h1 className="text-page-title text-roa-text-primary">Reminders</h1>
+          <p className="text-secondary text-roa-text-secondary mt-1">
+            Offline reminders that stay private on this device
           </p>
+          <div className="mt-3">
+            <ReminderSummary reminders={reminders} />
+          </div>
         </div>
         <button
           onClick={handleOpenCreate}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-roa-sage hover:bg-roa-sage-hover text-roa-surface text-sm font-semibold transition-colors"
+          className="h-9 flex items-center gap-2 px-4 rounded-roa border border-roa-sage bg-transparent hover:bg-roa-sage hover:text-roa-canvas text-roa-sage text-secondary font-semibold transition-colors"
         >
           <Plus className="w-4 h-4" />
           New Reminder
         </button>
       </div>
 
-      {/* Summary */}
-      <ReminderSummary reminders={reminders} />
-
       {/* Search and Filters */}
       <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-roa-text-muted" />
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-roa-text-muted pointer-events-none" />
           <input
             type="text"
             placeholder="Search reminders..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-roa-border bg-roa-surface text-sm text-roa-text-secondary placeholder-roa-text-muted focus:outline-none focus:border-roa-sage transition-colors"
+            className="w-full h-10 pl-10 pr-4 rounded-roa border border-roa-border bg-roa-raised text-body text-roa-text-primary placeholder-roa-text-muted focus:outline-none focus:ring-[1.5px] focus:ring-roa-sage transition-shadow"
           />
         </div>
 

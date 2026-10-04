@@ -7,7 +7,6 @@ import {
   Pencil,
   Trash2,
   AlarmClock,
-  ChevronDown,
 } from 'lucide-react';
 import {
   Reminder,
@@ -65,7 +64,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
       case 'interval':
         return <Repeat className="w-3.5 h-3.5 text-roa-sage" />;
       case 'daily':
-        return <Clock className="w-3.5 h-3.5 text-roa-warm-clay" />;
+        return <Clock className="w-3.5 h-3.5 text-roa-text-muted" />;
       case 'weekly':
         return <CalendarDays className="w-3.5 h-3.5 text-roa-sage" />;
       case 'one_time':
@@ -95,26 +94,22 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
   };
 
   return (
-    <div
-      className={`flex items-center gap-4 py-4 border-b border-roa-border transition-opacity ${
-        reminder.enabled ? 'opacity-100' : 'opacity-50'
-      }`}
-    >
+    <div className="flex items-center gap-4 min-h-[68px] py-4 px-6 hover:bg-roa-raised transition-colors">
       {/* Toggle checkbox */}
       <button
         onClick={() => onToggle(reminder.id, !reminder.enabled)}
         className="flex-shrink-0"
-        title={reminder.enabled ? 'Mark as inactive' : 'Mark as active'}
+        title={reminder.enabled ? 'Disable reminder' : 'Enable reminder'}
       >
         <div
-          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+          className={`w-[18px] h-[18px] rounded-roa-sm border flex items-center justify-center transition-colors ${
             reminder.enabled
               ? 'border-roa-sage bg-roa-sage'
               : 'border-roa-border hover:border-roa-sage'
           }`}
         >
           {reminder.enabled && (
-            <svg className="w-3 h-3 text-roa-surface" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3 h-3 text-roa-canvas" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           )}
@@ -125,7 +120,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
           <h4
-            className={`text-sm font-medium ${
+            className={`text-body-medium font-medium ${
               reminder.enabled ? 'text-roa-text-primary' : 'text-roa-text-muted line-through'
             }`}
           >
@@ -134,14 +129,14 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
         </div>
         
         {reminder.description && (
-          <p className="text-xs text-roa-text-muted mt-0.5 truncate">
+          <p className="text-meta text-roa-text-muted mt-0.5 truncate">
             {reminder.description}
           </p>
         )}
 
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 mt-1.5">
           {getScheduleIcon()}
-          <span className="text-xs text-roa-text-muted">
+          <span className="text-meta text-roa-text-muted">
             {getScheduleLabel()}
           </span>
         </div>
@@ -150,21 +145,21 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
       {/* Next occurrence */}
       {reminder.enabled && (
         <div className="text-right flex-shrink-0">
-          <p className="text-sm font-medium text-roa-text-secondary">
+          <p className="text-secondary font-medium text-roa-text-secondary">
             {formatNextRun(reminder.next_run_at)}
           </p>
         </div>
       )}
 
       {/* Actions */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1 flex-shrink-0">
         {/* Snooze */}
         {reminder.enabled && (
           <div className="relative">
             <button
               onClick={() => setShowSnoozeMenu(!showSnoozeMenu)}
               title="Snooze"
-              className="p-1.5 rounded hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary transition-colors"
+              className="p-1.5 rounded-roa-sm hover:bg-roa-canvas text-roa-text-muted hover:text-roa-text-secondary transition-colors"
             >
               <AlarmClock className="w-4 h-4" />
             </button>
@@ -175,11 +170,11 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
                   className="fixed inset-0 z-20"
                   onClick={() => setShowSnoozeMenu(false)}
                 />
-                <div className="absolute right-0 top-8 z-30 w-32 bg-roa-surface border border-roa-border rounded-lg shadow-lg p-1 text-xs">
-                  <div className="px-2 py-1 text-[10px] uppercase font-bold text-roa-structural-label">
+                <div className="absolute right-0 top-8 z-30 min-w-[140px] bg-roa-surface border border-roa-border rounded-roa shadow-lg overflow-hidden">
+                  <div className="px-3 py-2 text-micro text-roa-text-muted uppercase border-b border-roa-border">
                     Snooze For
                   </div>
-                  <div className="space-y-0.5 mt-1">
+                  <div className="py-1">
                     {[5, 10, 15, 30, 60].map((mins) => (
                       <button
                         key={mins}
@@ -187,7 +182,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
                           onSnooze(reminder.id, mins);
                           setShowSnoozeMenu(false);
                         }}
-                        className="w-full text-left px-2 py-1.5 rounded hover:bg-roa-raised text-roa-text-secondary font-medium transition-colors"
+                        className="w-full text-left px-3 py-2 hover:bg-roa-raised text-roa-text-secondary text-secondary font-medium transition-colors"
                       >
                         {mins < 60 ? `${mins} minutes` : '1 hour'}
                       </button>
@@ -203,7 +198,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
         <button
           onClick={() => onEdit(reminder)}
           title="Edit"
-          className="p-1.5 rounded hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary transition-colors"
+          className="p-1.5 rounded-roa-sm hover:bg-roa-canvas text-roa-text-muted hover:text-roa-text-secondary transition-colors"
         >
           <Pencil className="w-4 h-4" />
         </button>
@@ -216,7 +211,7 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
             }
           }}
           title="Delete"
-          className="p-1.5 rounded hover:bg-roa-raised text-roa-text-muted hover:text-roa-text-secondary transition-colors"
+          className="p-1.5 rounded-roa-sm hover:bg-roa-canvas text-roa-text-muted hover:text-roa-text-secondary transition-colors"
         >
           <Trash2 className="w-4 h-4" />
         </button>

@@ -26,27 +26,26 @@ export const ReminderList: React.FC<ReminderListProps> = ({
 }) => {
   if (reminders.length === 0) {
     return (
-      <div className="border border-dashed border-roa-border rounded-lg p-12 text-center space-y-3">
-        <div className="w-12 h-12 rounded-full bg-roa-raised mx-auto flex items-center justify-center">
-          <Clock className="w-6 h-6 text-roa-text-muted" />
-        </div>
+      <div className="py-16 text-center space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-roa-text-primary">No reminders found</h3>
-          <p className="text-sm text-roa-text-muted max-w-xs mx-auto mt-1">
+          <h3 className="text-section-title-sm font-semibold text-roa-text-primary">
+            {searchQuery ? 'No results' : filter === 'active' ? 'No active reminders' : 'No reminders yet'}
+          </h3>
+          <p className="text-secondary text-roa-text-secondary max-w-md mx-auto mt-2">
             {searchQuery
-              ? 'No reminders match your search query.'
+              ? 'Try adjusting your search or filter.'
               : filter === 'active'
-              ? 'You have no active reminders right now.'
-              : 'Get started by creating your first offline reminder.'}
+              ? 'Create a reminder or enable an existing one.'
+              : 'Set up your first reminder to get started.'}
           </p>
         </div>
         {!searchQuery && (
           <button
             onClick={onCreateNew}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-roa-sage hover:bg-roa-sage-hover text-roa-surface text-sm font-semibold transition-colors mt-3"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-roa bg-roa-sage hover:bg-roa-sage-hover text-roa-canvas text-secondary font-semibold transition-colors"
           >
             <Plus className="w-4 h-4" />
-            Create Reminder
+            New Reminder
           </button>
         )}
       </div>
@@ -54,7 +53,7 @@ export const ReminderList: React.FC<ReminderListProps> = ({
   }
 
   return (
-    <div className="bg-roa-surface border border-roa-border rounded-lg divide-y divide-roa-border">
+    <div className="border border-roa-border rounded-roa divide-y divide-roa-border">
       {reminders.map((reminder) => (
         <ReminderRow
           key={reminder.id}
