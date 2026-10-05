@@ -22,12 +22,12 @@ export interface CompanionSettingsProps {
   onResetPosition: () => void;
 }
 
-const moodOptions: { value: PetMood; label: string; icon: string }[] = [
-  { value: 'idle', label: 'Idle', icon: '😌' },
-  { value: 'happy', label: 'Happy', icon: '😊' },
-  { value: 'sleeping', label: 'Sleeping', icon: '😴' },
-  { value: 'thinking', label: 'Thinking', icon: '🤔' },
-  { value: 'celebrating', label: 'Celebrating', icon: '🎉' },
+const moodOptions: { value: PetMood; label: string }[] = [
+  { value: 'idle', label: 'Idle' },
+  { value: 'happy', label: 'Happy' },
+  { value: 'sleeping', label: 'Sleeping' },
+  { value: 'thinking', label: 'Thinking' },
+  { value: 'celebrating', label: 'Celebrating' },
 ];
 
 export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
@@ -49,12 +49,12 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
       <SectionLabel>COMPANION</SectionLabel>
 
       {/* Character Selection */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="text-sm font-medium text-roa-text-primary">
           Choose your companion
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           {characters.map((char) => {
             const isActive = character?.id === char.id;
             
@@ -64,22 +64,19 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
                 onClick={() => onSelectCharacter(char.id)}
                 disabled={isActive}
                 className={`
-                  p-4 rounded-lg border text-left transition-all
+                  p-3 rounded-roa border text-left transition-colors
                   ${isActive
-                    ? 'bg-roa-raised border-roa-sage ring-1 ring-roa-sage'
-                    : 'bg-roa-surface border-roa-border hover:border-roa-sage/40'
+                    ? 'border-roa-sage'
+                    : 'border-roa-border hover:border-roa-sage/40'
                   }
                   disabled:cursor-default
                 `}
               >
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {/* Character Preview - Deferred until final artwork is ready */}
-                  <div className="w-full aspect-square rounded-lg bg-roa-background border border-roa-border flex items-center justify-center">
-                    <div className="text-center px-4">
-                      <div className="text-xs font-medium text-roa-text-secondary mb-0.5">
-                        {char.name}
-                      </div>
-                      <div className="text-[10px] text-roa-text-muted">
+                  <div className="w-[120px] h-[120px] mx-auto rounded-roa-preview bg-roa-canvas border border-roa-border flex items-center justify-center">
+                    <div className="text-center px-3">
+                      <div className="text-[10px] font-medium text-roa-text-muted">
                         Character preview coming soon
                       </div>
                     </div>
@@ -87,7 +84,7 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
                   
                   {/* Character Info */}
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-1.5 mb-0.5">
                       <h4 className="text-sm font-semibold text-roa-text-primary">
                         {char.name}
                       </h4>
@@ -109,39 +106,33 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
       {/* Mood Selection */}
       <div className="space-y-3">
         <div className="text-sm font-medium text-roa-text-primary">
-          Mood
+          Companion mood
         </div>
-        <div className="flex flex-wrap gap-2">
+        <select
+          value={mood}
+          onChange={(e) => onMoodChange(e.target.value as PetMood)}
+          className="w-full px-3 py-2.5 text-sm bg-roa-raised border border-roa-border rounded-roa text-roa-text-primary focus:outline-none focus:border-roa-sage focus:ring-1 focus:ring-roa-sage"
+        >
           {moodOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => onMoodChange(option.value)}
-              className={`
-                px-3 py-2 rounded-lg border text-sm font-medium transition-colors
-                flex items-center gap-2
-                ${mood === option.value
-                  ? 'bg-roa-raised border-roa-sage text-roa-sage'
-                  : 'bg-roa-surface border-roa-border text-roa-text-secondary hover:border-roa-sage/40'
-                }
-              `}
-            >
-              <span>{option.icon}</span>
-              <span>{option.label}</span>
-            </button>
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       <Divider />
 
-      {/* Companion Behavior */}
-      <div className="space-y-px bg-roa-surface border border-roa-border rounded-lg divide-y divide-roa-border">
+      {/* Companion Behavior - Compact utility rows with dividers */}
+      <div>
         <SettingsRow
           label="Companion visible"
           description="Show or hide your floating companion"
         >
           <Toggle checked={petVisible} onChange={onTogglePetVisible} />
         </SettingsRow>
+
+        <Divider />
 
         <SettingsRow
           label="Always on top"
@@ -150,12 +141,16 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
           <Toggle checked={alwaysOnTop} onChange={onToggleAlwaysOnTop} />
         </SettingsRow>
 
+        <Divider />
+
         <SettingsRow
           label="Click-through mode"
-          description="Let clicks pass through companion to windows beneath"
+          description="Let clicks pass through to windows beneath"
         >
           <Toggle checked={clickThrough} onChange={onToggleClickThrough} />
         </SettingsRow>
+
+        <Divider />
 
         <SettingsRow
           label="Position"

@@ -17,7 +17,7 @@ export const SettingsRow: React.FC<SettingsRowProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`flex items-center justify-between gap-6 py-4 ${className}`}>
+    <div className={`flex items-center justify-between gap-6 min-h-[68px] py-4 ${className}`}>
       <div className="flex-1">
         <div className="text-sm font-medium text-roa-text-primary">
           {label}
@@ -28,7 +28,7 @@ export const SettingsRow: React.FC<SettingsRowProps> = ({
           </div>
         )}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         {children}
       </div>
     </div>

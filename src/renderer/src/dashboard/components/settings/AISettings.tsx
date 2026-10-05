@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AIProviderStatus } from '@shared/types/ai';
 import { SectionLabel } from '../ui/SectionLabel';
+import { Divider } from '../ui/Divider';
 import { Toggle } from '../ui/Toggle';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -87,10 +88,10 @@ export const AISettings: React.FC<AISettingsProps> = ({
       <SectionLabel>AI ASSISTANT</SectionLabel>
 
       {/* AI Enable/Disable */}
-      <div className="bg-roa-surface border border-roa-border rounded-lg p-4">
+      <div>
         <SettingsRow
           label="AI assistant"
-          description="Powered by Google Gemini with your API key"
+          description="Powered by Gemini with your API key"
         >
           <Toggle
             checked={aiProvider === 'gemini'}
@@ -100,23 +101,25 @@ export const AISettings: React.FC<AISettingsProps> = ({
         </SettingsRow>
       </div>
 
+      <Divider />
+
       {/* API Key Configuration */}
-      <div className="bg-roa-surface border border-roa-border rounded-lg p-4 space-y-4">
+      <div className="space-y-4">
         <div>
           <div className="text-sm font-medium text-roa-text-primary mb-1">
-            API Key
+            API key
           </div>
           <div className="text-xs text-roa-text-muted">
             {aiMaskedKey
-              ? 'Your key is stored securely on this device.'
-              : 'Get your free API key from Google AI Studio.'}
+              ? 'Your key is stored securely on this device'
+              : 'Get your free API key from Google AI Studio'}
           </div>
         </div>
 
         {aiMaskedKey && !isEditingKey ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <code className="flex-1 px-3 py-2 text-xs font-mono bg-roa-canvas border border-roa-border rounded-roa text-roa-text-muted">
+              <code className="flex-1 px-3 py-2 text-xs font-mono bg-roa-raised border border-roa-border rounded-roa text-roa-text-muted">
                 {aiMaskedKey}
               </code>
               <Button
@@ -130,7 +133,7 @@ export const AISettings: React.FC<AISettingsProps> = ({
                 variant="secondary"
                 size="sm"
                 onClick={onRemoveCredential}
-                className="text-roa-text-muted hover:text-red-600"
+                className="text-roa-text-muted hover:text-roa-clay"
               >
                 Remove
               </Button>
@@ -145,7 +148,7 @@ export const AISettings: React.FC<AISettingsProps> = ({
                 onChange={(e) => setInputKey(e.target.value)}
                 placeholder="AIzaSy..."
                 disabled={!isElectron}
-                className="w-full px-3 py-2 pr-10 text-sm font-mono bg-roa-surface border border-roa-border rounded-roa placeholder:text-roa-text-muted focus:outline-none focus:border-roa-sage focus:ring-1 focus:ring-roa-sage disabled:opacity-50"
+                className="w-full px-3 py-2 pr-10 text-sm font-mono bg-roa-raised border border-roa-border rounded-roa text-roa-text-primary placeholder:text-roa-text-muted focus:outline-none focus:border-roa-sage focus:ring-1 focus:ring-roa-sage disabled:opacity-50"
               />
               <button
                 type="button"
@@ -191,12 +194,12 @@ export const AISettings: React.FC<AISettingsProps> = ({
 
         {aiFeedback && (
           <div
-            className={`text-xs p-3 rounded-lg border ${
+            className={`text-xs p-3 rounded-roa border ${
               aiFeedback.includes('successfully') || aiFeedback.includes('verified') || aiFeedback.includes('saved')
                 ? 'bg-roa-raised border-roa-sage text-roa-sage'
                 : aiFeedback.includes('limit') || aiFeedback.includes('unavailable') || aiFeedback.includes('rate')
-                ? 'bg-amber-50 border-amber-200 text-amber-800'
-                : 'bg-roa-canvas border-roa-border text-roa-text-secondary'
+                ? 'bg-roa-raised border-roa-clay text-roa-clay'
+                : 'bg-roa-raised border-roa-border text-roa-text-secondary'
             }`}
           >
             {aiFeedback}
@@ -204,38 +207,38 @@ export const AISettings: React.FC<AISettingsProps> = ({
         )}
       </div>
 
+      <Divider />
+
       {/* Connection Status */}
-      <div className="bg-roa-surface border border-roa-border rounded-lg divide-y divide-roa-border">
-        <div className="p-4">
-          <div className="text-sm font-medium text-roa-text-primary mb-3">
-            Status
+      <div className="space-y-4">
+        <div className="text-sm font-medium text-roa-text-primary">
+          Connection status
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-roa-text-secondary">API key</span>
+            <StatusPip
+              color={getCredentialStatusColor()}
+              label={
+                aiCredentialStatus === 'verified'
+                  ? 'Verified'
+                  : aiCredentialStatus === 'invalid'
+                  ? 'Invalid'
+                  : 'Not Configured'
+              }
+            />
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-roa-text-secondary">API Key</span>
-              <StatusPip
-                color={getCredentialStatusColor()}
-                label={
-                  aiCredentialStatus === 'verified'
-                    ? 'Verified'
-                    : aiCredentialStatus === 'invalid'
-                    ? 'Invalid'
-                    : 'Not Configured'
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-roa-text-secondary">Service</span>
-              <StatusPip
-                color={getServiceStatusColor()}
-                label={getServiceStatusLabel()}
-              />
-            </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-roa-text-secondary">Service</span>
+            <StatusPip
+              color={getServiceStatusColor()}
+              label={getServiceStatusLabel()}
+            />
           </div>
         </div>
-
+        
         {aiMaskedKey && !isEditingKey && (
-          <div className="p-4">
+          <div className="pt-2">
             <Button
               variant="secondary"
               size="sm"

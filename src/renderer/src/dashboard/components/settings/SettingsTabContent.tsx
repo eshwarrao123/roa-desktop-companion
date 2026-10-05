@@ -84,19 +84,19 @@ export const SettingsTabContent: React.FC<SettingsTabContentProps> = ({
     <div className="max-w-3xl space-y-8">
       {/* Page Header */}
       <div>
-        <h2 className="text-2xl font-semibold text-roa-text-primary">Settings</h2>
-        <p className="text-sm text-roa-text-muted mt-1">
-          Customize how ROA works with your desktop
+        <h2 className="text-page-title text-roa-text-primary">Settings</h2>
+        <p className="text-secondary text-roa-text-muted mt-1">
+          Configure Roa to fit your day
         </p>
       </div>
 
       {!isElectron && (
-        <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-roa bg-roa-raised border border-roa-border text-roa-text-secondary text-xs flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-roa-clay shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-semibold text-amber-900">Browser Preview Mode</h4>
-            <p className="mt-0.5 text-amber-700">
-              This screen is available inside the ROA desktop application. Full desktop functionality (pet window, offline reminders, system timers, and AI bridge) requires launching via Electron.
+            <h4 className="font-semibold text-roa-text-primary">Browser Preview Mode</h4>
+            <p className="mt-0.5 text-roa-text-secondary">
+              Full desktop functionality requires launching the Roa desktop application.
             </p>
           </div>
         </div>
