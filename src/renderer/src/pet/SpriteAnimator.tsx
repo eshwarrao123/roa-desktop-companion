@@ -55,13 +55,13 @@ export const SpriteAnimator: React.FC<SpriteAnimatorProps> = ({
     switch (mood) {
       case 'happy':
       case 'celebrating':
-        return 'animate-bounce';
+        return 'animate-pet-happy';
       case 'sleeping':
-        return 'animate-pulse';
+        return 'animate-pet-sleeping';
       case 'reminding':
-        return 'animate-pulse';
+        return 'animate-pet-idle';
       case 'thinking':
-        return 'animate-pulse';
+        return 'animate-pet-idle';
       case 'idle':
       default:
         return 'animate-pet-idle';
@@ -75,17 +75,11 @@ export const SpriteAnimator: React.FC<SpriteAnimatorProps> = ({
         transform: `scaleX(${walkDirection}) translateY(${walkBob}px)`,
       }}
     >
-      {/* Subtle State Indicators - No Emoji */}
+      {/* Subtle State Indicators */}
       {effectiveState === 'sleeping' && (
         <div className="absolute -top-1 right-5 pointer-events-none select-none z-10 text-roa-text-muted/70">
           <span className="absolute text-xs animate-zzz-1">z</span>
           <span className="absolute text-sm animate-zzz-2">Z</span>
-        </div>
-      )}
-
-      {(effectiveState === 'happy' || effectiveState === 'celebrating') && (
-        <div className="absolute -top-2 left-6 pointer-events-none select-none text-roa-sage/60 text-xs animate-bounce-gentle z-10">
-          ✦
         </div>
       )}
 

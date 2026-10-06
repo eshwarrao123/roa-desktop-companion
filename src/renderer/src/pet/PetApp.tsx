@@ -182,7 +182,7 @@ export const PetApp: React.FC = () => {
         {/* Contextual Text - Minimal and Close to Character */}
         {contextMessage && (
           <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-50 non-draggable">
-            <div className="relative bg-roa-surface/80 backdrop-blur-sm rounded-lg px-2.5 py-1 shadow-sm border border-roa-border/50">
+            <div className="relative bg-roa-surface rounded-md px-2.5 py-1.5 shadow-lg border border-roa-border">
               <div className="text-[11px] leading-tight font-medium text-roa-text-primary truncate max-w-[160px]">
                 {contextMessage}
               </div>
@@ -192,7 +192,7 @@ export const PetApp: React.FC = () => {
                   setActiveReminder(null);
                   setMood('idle');
                 }}
-                className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-roa-surface border border-roa-border flex items-center justify-center text-roa-text-muted hover:text-roa-text-primary hover:border-roa-sage transition-colors"
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-roa-raised border border-roa-border flex items-center justify-center text-roa-text-muted hover:text-roa-text-primary hover:border-roa-sage transition-colors no-drag-region"
                 aria-label="Dismiss"
               >
                 <X className="w-2.5 h-2.5" />
