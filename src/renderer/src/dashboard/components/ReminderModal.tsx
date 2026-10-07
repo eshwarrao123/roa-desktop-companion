@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Clock, Repeat, CalendarDays, Sparkles } from 'lucide-react';
+import { X, Calendar, Clock, Repeat, CalendarDays } from 'lucide-react';
 import {
   Reminder,
   CreateReminderInput,
@@ -148,41 +148,38 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-roa-surface border border-roa-border rounded-roa w-full max-w-lg shadow-xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-              <Clock className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold tracking-tight">
-                {initialReminder ? 'Edit Reminder' : 'Create Local Reminder'}
-              </h3>
-              <p className="text-[11px] text-zinc-500">Scheduled offline with local SQLite engine</p>
-            </div>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-roa-border">
+          <div>
+            <h3 className="text-section-title-sm font-semibold text-roa-text-primary">
+              {initialReminder ? 'Edit Reminder' : 'New Reminder'}
+            </h3>
+            <p className="text-meta text-roa-text-muted mt-0.5">
+              Set up an offline reminder
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1.5 rounded-lg transition-colors"
+            className="text-roa-text-muted hover:text-roa-text-secondary p-1.5 rounded-roa-sm transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {error && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900 text-xs">
+            <div className="p-3 rounded-roa bg-roa-raised text-roa-clay border border-roa-clay/30 text-secondary">
               {error}
             </div>
           )}
 
           {/* Title */}
           <div>
-            <label className="block font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Title <span className="text-red-500">*</span>
+            <label className="block text-secondary font-medium text-roa-text-secondary mb-2">
+              Title <span className="text-roa-clay">*</span>
             </label>
             <input
               type="text"
@@ -190,15 +187,15 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Drink Water, Stretch, Stand Up"
               maxLength={128}
-              className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-[#1E1E38] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full h-10 px-3 rounded-roa border border-roa-border bg-roa-raised text-body text-roa-text-primary placeholder-roa-text-muted focus:outline-none focus:ring-[1.5px] focus:ring-roa-sage transition-shadow"
               autoFocus
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Description <span className="text-zinc-400 font-normal">(Optional)</span>
+            <label className="block text-secondary font-medium text-roa-text-secondary mb-2">
+              Description <span className="text-roa-text-muted font-normal">(Optional)</span>
             </label>
             <input
               type="text"
@@ -206,75 +203,75 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Stay hydrated for better focus"
               maxLength={1024}
-              className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-[#1E1E38] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+              className="w-full h-10 px-3 rounded-roa border border-roa-border bg-roa-raised text-body text-roa-text-primary placeholder-roa-text-muted focus:outline-none focus:ring-[1.5px] focus:ring-roa-sage transition-shadow"
             />
           </div>
 
           {/* Schedule Type Tabs */}
           <div>
-            <label className="block font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+            <label className="block text-secondary font-medium text-roa-text-secondary mb-2">
               Schedule Type
             </label>
-            <div className="grid grid-cols-4 gap-1.5 p-1 bg-zinc-100 dark:bg-[#1E1E38] rounded-xl border border-zinc-200/80 dark:border-zinc-800">
+            <div className="grid grid-cols-4 gap-2">
               <button
                 type="button"
                 onClick={() => setScheduleType('interval')}
-                className={`py-1.5 rounded-lg font-medium transition-all flex items-center justify-center gap-1.5 ${
+                className={`h-10 flex items-center justify-center gap-1.5 rounded-roa border text-secondary font-medium transition-colors ${
                   scheduleType === 'interval'
-                    ? 'bg-white dark:bg-[#252542] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                    ? 'bg-roa-canvas border-roa-sage text-roa-sage'
+                    : 'border-roa-border text-roa-text-muted hover:text-roa-text-secondary hover:border-roa-sage/50'
                 }`}
               >
-                <Repeat className="w-3 h-3" />
+                <Repeat className="w-3.5 h-3.5" />
                 Interval
               </button>
 
               <button
                 type="button"
                 onClick={() => setScheduleType('daily')}
-                className={`py-1.5 rounded-lg font-medium transition-all flex items-center justify-center gap-1.5 ${
+                className={`h-10 flex items-center justify-center gap-1.5 rounded-roa border text-secondary font-medium transition-colors ${
                   scheduleType === 'daily'
-                    ? 'bg-white dark:bg-[#252542] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                    ? 'bg-roa-canvas border-roa-sage text-roa-sage'
+                    : 'border-roa-border text-roa-text-muted hover:text-roa-text-secondary hover:border-roa-sage/50'
                 }`}
               >
-                <Clock className="w-3 h-3" />
+                <Clock className="w-3.5 h-3.5" />
                 Daily
               </button>
 
               <button
                 type="button"
                 onClick={() => setScheduleType('weekly')}
-                className={`py-1.5 rounded-lg font-medium transition-all flex items-center justify-center gap-1.5 ${
+                className={`h-10 flex items-center justify-center gap-1.5 rounded-roa border text-secondary font-medium transition-colors ${
                   scheduleType === 'weekly'
-                    ? 'bg-white dark:bg-[#252542] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                    ? 'bg-roa-canvas border-roa-sage text-roa-sage'
+                    : 'border-roa-border text-roa-text-muted hover:text-roa-text-secondary hover:border-roa-sage/50'
                 }`}
               >
-                <CalendarDays className="w-3 h-3" />
+                <CalendarDays className="w-3.5 h-3.5" />
                 Weekly
               </button>
 
               <button
                 type="button"
                 onClick={() => setScheduleType('one_time')}
-                className={`py-1.5 rounded-lg font-medium transition-all flex items-center justify-center gap-1.5 ${
+                className={`h-10 flex items-center justify-center gap-1.5 rounded-roa border text-secondary font-medium transition-colors ${
                   scheduleType === 'one_time'
-                    ? 'bg-white dark:bg-[#252542] text-indigo-600 dark:text-indigo-400 shadow-sm'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                    ? 'bg-roa-canvas border-roa-sage text-roa-sage'
+                    : 'border-roa-border text-roa-text-muted hover:text-roa-text-secondary hover:border-roa-sage/50'
                 }`}
               >
-                <Calendar className="w-3 h-3" />
-                One-Time
+                <Calendar className="w-3.5 h-3.5" />
+                Once
               </button>
             </div>
           </div>
 
           {/* Dynamic Schedule Configuration */}
-          <div className="p-4 rounded-xl bg-zinc-50/80 dark:bg-[#1E1E38]/60 border border-zinc-200/60 dark:border-zinc-800 space-y-3">
+          <div className="p-4 rounded-roa bg-roa-raised border border-roa-border space-y-4">
             {scheduleType === 'interval' && (
               <div className="space-y-3">
-                <label className="block text-zinc-600 dark:text-zinc-400 font-medium">
+                <label className="block text-secondary text-roa-text-secondary font-medium">
                   Repeat every:
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -283,71 +280,71 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
                       key={mins}
                       type="button"
                       onClick={() => setIntervalMinutes(mins)}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
+                      className={`h-8 px-3 rounded-roa border text-secondary font-medium transition-colors ${
                         intervalMinutes === mins
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-white dark:bg-[#252542] border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                          ? 'bg-roa-sage border-roa-sage text-roa-canvas'
+                          : 'bg-roa-canvas border-roa-border text-roa-text-secondary hover:border-roa-sage'
                       }`}
                     >
                       {mins < 60 ? `${mins}m` : `${mins / 60}h`}
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2">
                   <input
                     type="number"
                     min={1}
                     max={10080}
                     value={intervalMinutes}
                     onChange={(e) => setIntervalMinutes(Math.max(1, Number(e.target.value)))}
-                    className="w-24 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] text-xs"
+                    className="w-24 h-8 px-3 rounded-roa border border-roa-border bg-roa-canvas text-secondary text-roa-text-primary focus:outline-none focus:ring-[1.5px] focus:ring-roa-sage transition-shadow"
                   />
-                  <span className="text-zinc-500">minutes</span>
+                  <span className="text-secondary text-roa-text-muted">minutes</span>
                 </div>
               </div>
             )}
 
             {scheduleType === 'daily' && (
               <div className="space-y-2">
-                <label className="block text-zinc-600 dark:text-zinc-400 font-medium">
+                <label className="block text-secondary text-roa-text-secondary font-medium">
                   At what time each day?
                 </label>
                 <input
                   type="time"
                   value={dailyTime}
                   onChange={(e) => setDailyTime(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] text-xs font-mono"
+                  className="h-10 px-3 rounded-roa border border-roa-border bg-roa-canvas text-secondary text-roa-text-primary font-mono focus:outline-none focus:ring-[1.5px] focus:ring-roa-sage transition-shadow"
                 />
               </div>
             )}
 
             {scheduleType === 'weekly' && (
               <div className="space-y-3">
-                <label className="block text-zinc-600 dark:text-zinc-400 font-medium">
+                <label className="block text-secondary text-roa-text-secondary font-medium">
                   Which day and time?
                 </label>
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-1.5">
                   {DAYS_OF_WEEK.map((day, idx) => (
                     <button
                       key={day}
                       type="button"
                       onClick={() => setWeeklyDay(idx)}
-                      className={`py-1.5 text-[11px] rounded-lg border font-medium transition-colors ${
+                      className={`h-9 text-micro rounded-roa border font-semibold transition-colors ${
                         weeklyDay === idx
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-white dark:bg-[#252542] border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                          ? 'bg-roa-sage border-roa-sage text-roa-canvas'
+                          : 'bg-roa-canvas border-roa-border text-roa-text-secondary hover:border-roa-sage'
                       }`}
                     >
-                      {day.slice(0, 3)}
+                      {day.slice(0, 3).toUpperCase()}
                     </button>
                   ))}
                 </div>
-                <div className="pt-1">
+                <div>
                   <input
                     type="time"
                     value={weeklyTime}
                     onChange={(e) => setWeeklyTime(e.target.value)}
-                    className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] text-xs font-mono"
+                    className="h-10 px-3 rounded-roa border border-roa-border bg-roa-canvas text-secondary text-roa-text-primary font-mono focus:outline-none focus:ring-[1.5px] focus:ring-roa-sage transition-shadow"
                   />
                 </div>
               </div>
@@ -356,25 +353,25 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
             {scheduleType === 'one_time' && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-zinc-600 dark:text-zinc-400 font-medium mb-1">
+                  <label className="block text-secondary text-roa-text-secondary font-medium mb-2">
                     Date
                   </label>
                   <input
                     type="date"
                     value={oneTimeDate}
                     onChange={(e) => setOneTimeDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] text-xs font-mono"
+                    className="w-full h-10 px-3 rounded-roa border border-roa-border bg-roa-canvas text-secondary text-roa-text-primary font-mono focus:outline-none focus:ring-[1.5px] focus:ring-roa-sage transition-shadow"
                   />
                 </div>
                 <div>
-                  <label className="block text-zinc-600 dark:text-zinc-400 font-medium mb-1">
+                  <label className="block text-secondary text-roa-text-secondary font-medium mb-2">
                     Time
                   </label>
                   <input
                     type="time"
                     value={oneTimeTime}
                     onChange={(e) => setOneTimeTime(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-[#252542] text-xs font-mono"
+                    className="w-full h-10 px-3 rounded-roa border border-roa-border bg-roa-canvas text-secondary text-roa-text-primary font-mono focus:outline-none focus:ring-[1.5px] focus:ring-roa-sage transition-shadow"
                   />
                 </div>
               </div>
@@ -382,18 +379,18 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-roa-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors font-medium text-zinc-700 dark:text-zinc-300"
+              className="h-9 px-4 rounded-roa border border-roa-border bg-transparent hover:bg-roa-raised text-roa-text-secondary text-secondary font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors shadow-sm disabled:opacity-50"
+              className="h-9 px-4 rounded-roa bg-roa-sage hover:bg-roa-sage-hover text-roa-canvas text-secondary font-semibold transition-colors shadow-sm disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : initialReminder ? 'Update Reminder' : 'Create Reminder'}
             </button>

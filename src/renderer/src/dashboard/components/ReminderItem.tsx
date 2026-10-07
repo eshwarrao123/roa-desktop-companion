@@ -65,13 +65,13 @@ export const ReminderItem: React.FC<ReminderItemProps> = ({
   const getScheduleIcon = () => {
     switch (reminder.schedule_type) {
       case 'interval':
-        return <Repeat className="w-3.5 h-3.5 text-indigo-500" />;
+        return <Repeat className="w-3.5 h-3.5 text-roa-text-muted" />;
       case 'daily':
-        return <Clock className="w-3.5 h-3.5 text-amber-500" />;
+        return <Clock className="w-3.5 h-3.5 text-roa-text-muted" />;
       case 'weekly':
-        return <CalendarDays className="w-3.5 h-3.5 text-emerald-500" />;
+        return <CalendarDays className="w-3.5 h-3.5 text-roa-text-muted" />;
       case 'one_time':
-        return <Calendar className="w-3.5 h-3.5 text-violet-500" />;
+        return <Calendar className="w-3.5 h-3.5 text-roa-text-muted" />;
     }
   };
 
@@ -103,10 +103,10 @@ export const ReminderItem: React.FC<ReminderItemProps> = ({
 
   return (
     <div
-      className={`p-4 rounded-xl border transition-all ${
+      className={`p-4 rounded-roa border transition-all ${
         reminder.enabled
-          ? 'bg-white dark:bg-[#252542] border-zinc-200 dark:border-[#3D3D6B] shadow-sm'
-          : 'bg-zinc-50/70 dark:bg-[#1E1E38]/60 border-zinc-200/60 dark:border-zinc-800/80 opacity-75'
+          ? 'bg-roa-raised border-roa-border'
+          : 'bg-roa-canvas border-roa-border opacity-75'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -115,32 +115,32 @@ export const ReminderItem: React.FC<ReminderItemProps> = ({
           <div className="flex items-center gap-2">
             <h4
               className={`text-sm font-semibold truncate ${
-                reminder.enabled ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 line-through'
+                reminder.enabled ? 'text-roa-text-primary' : 'text-roa-text-muted line-through'
               }`}
             >
               {reminder.title}
             </h4>
-            <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-[#1E1E38] border border-zinc-200/80 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 font-medium">
+            <span className="flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-roa-canvas border border-roa-border text-roa-text-secondary font-medium">
               {getScheduleIcon()}
               {getScheduleLabel()}
             </span>
           </div>
 
           {reminder.description && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1">
+            <p className="text-xs text-roa-text-secondary line-clamp-1">
               {reminder.description}
             </p>
           )}
 
           {/* Next Run & Status */}
-          <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-500 pt-1">
+          <div className="flex items-center gap-2 text-[11px] font-mono text-roa-text-muted pt-1">
             {reminder.enabled ? (
-              <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-medium">
+              <span className="flex items-center gap-1 text-roa-sage font-medium">
                 <Clock className="w-3 h-3" />
                 Next: {formatNextRun(reminder.next_run_at)}
               </span>
             ) : (
-              <span className="text-zinc-400">Inactive / Completed</span>
+              <span className="text-roa-text-muted">Inactive / Completed</span>
             )}
           </div>
         </div>
@@ -153,14 +153,14 @@ export const ReminderItem: React.FC<ReminderItemProps> = ({
               <button
                 onClick={() => setShowSnoozeMenu(!showSnoozeMenu)}
                 title="Snooze reminder"
-                className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-[#2D2D4E] text-zinc-600 dark:text-zinc-400 transition-colors"
+                className="p-1.5 rounded-roa border border-roa-border hover:bg-roa-raised text-roa-text-secondary transition-colors"
               >
                 <AlarmClock className="w-3.5 h-3.5" />
               </button>
 
               {showSnoozeMenu && (
-                <div className="absolute right-0 top-8 z-30 w-32 bg-white dark:bg-[#252542] border border-zinc-200 dark:border-[#3D3D6B] rounded-xl shadow-lg p-1 text-xs divide-y divide-zinc-100 dark:divide-zinc-800 animate-in fade-in">
-                  <div className="px-2 py-1 text-[10px] uppercase font-mono text-zinc-400 font-semibold">
+                <div className="absolute right-0 top-8 z-30 w-32 bg-roa-surface border border-roa-border rounded-roa shadow-lg p-1 text-xs divide-y divide-roa-border">
+                  <div className="px-2 py-1 text-[10px] uppercase font-mono text-roa-text-muted font-semibold">
                     Snooze For
                   </div>
                   <div className="pt-1 space-y-0.5">
@@ -171,7 +171,7 @@ export const ReminderItem: React.FC<ReminderItemProps> = ({
                           onSnooze(reminder.id, mins);
                           setShowSnoozeMenu(false);
                         }}
-                        className="w-full text-left px-2 py-1 rounded hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-zinc-700 dark:text-zinc-300 font-medium"
+                        className="w-full text-left px-2 py-1 rounded-roa-sm hover:bg-roa-raised text-roa-text-primary font-medium"
                       >
                         {mins < 60 ? `${mins} minutes` : '1 hour'}
                       </button>
@@ -186,12 +186,12 @@ export const ReminderItem: React.FC<ReminderItemProps> = ({
           <button
             onClick={() => onToggle(reminder.id, !reminder.enabled)}
             className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out focus:outline-none ${
-              reminder.enabled ? 'bg-indigo-600' : 'bg-zinc-300 dark:bg-zinc-700'
+              reminder.enabled ? 'bg-roa-sage' : 'bg-roa-border'
             }`}
             title={reminder.enabled ? 'Click to disable' : 'Click to enable'}
           >
             <div
-              className={`w-4 h-4 rounded-full bg-white transition-transform duration-200 ease-in-out shadow-sm ${
+              className={`w-4 h-4 rounded-full bg-roa-text-primary transition-transform duration-200 ease-in-out shadow-sm ${
                 reminder.enabled ? 'translate-x-4' : 'translate-x-0'
               }`}
             />

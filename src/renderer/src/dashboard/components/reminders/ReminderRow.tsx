@@ -62,11 +62,11 @@ export const ReminderRow: React.FC<ReminderRowProps> = ({
   const getScheduleIcon = () => {
     switch (reminder.schedule_type) {
       case 'interval':
-        return <Repeat className="w-3.5 h-3.5 text-roa-sage" />;
+        return <Repeat className="w-3.5 h-3.5 text-roa-text-muted" />;
       case 'daily':
         return <Clock className="w-3.5 h-3.5 text-roa-text-muted" />;
       case 'weekly':
-        return <CalendarDays className="w-3.5 h-3.5 text-roa-sage" />;
+        return <CalendarDays className="w-3.5 h-3.5 text-roa-text-muted" />;
       case 'one_time':
         return <Calendar className="w-3.5 h-3.5 text-roa-text-muted" />;
     }
