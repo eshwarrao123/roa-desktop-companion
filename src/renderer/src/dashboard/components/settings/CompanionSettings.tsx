@@ -5,6 +5,7 @@ import { Divider } from '../ui/Divider';
 import { Toggle } from '../ui/Toggle';
 import { Button } from '../ui/Button';
 import { SettingsRow } from './SettingsRow';
+import { CharacterPreview } from '../ui/CharacterPreview';
 import { Check } from 'lucide-react';
 
 export interface CompanionSettingsProps {
@@ -73,13 +74,9 @@ export const CompanionSettings: React.FC<CompanionSettingsProps> = ({
                 `}
               >
                 <div className="space-y-2.5">
-                  {/* Character Preview - Deferred until final artwork is ready */}
-                  <div className="w-[120px] h-[120px] mx-auto rounded-roa-preview bg-roa-canvas border border-roa-border flex items-center justify-center">
-                    <div className="text-center px-3">
-                      <div className="text-[10px] font-medium text-roa-text-muted">
-                        Character preview coming soon
-                      </div>
-                    </div>
+                  {/* Character Preview */}
+                  <div className="w-[120px] h-[120px] mx-auto rounded-roa-preview bg-roa-canvas border border-roa-border flex items-center justify-center overflow-hidden">
+                    <CharacterPreview characterId={char.id} size={120} />
                   </div>
                   
                   {/* Character Info */}
