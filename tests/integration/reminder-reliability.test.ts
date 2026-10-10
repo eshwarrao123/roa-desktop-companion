@@ -54,7 +54,7 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
               ] = args;
               remindersDb.set(id, {
                 id, title, description, schedule_type,
-                schedule_data: JSON.parse(schedule_data_json),
+                schedule_data: schedule_data_json,
                 timezone, enabled, next_run_at, last_run_at,
                 created_at, updated_at,
                 metadata_json: metadata_json || null,
@@ -65,18 +65,8 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
         }
 
         if (sql.includes('SELECT * FROM reminders WHERE id = ?')) {
-          return { 
-            get: (id: string) => {
-              const reminder = remindersDb.get(id);
-              // Ensure schedule_data is properly preserved
-              if (reminder && typeof reminder.schedule_data === 'string') {
-                return {
-                  ...reminder,
-                  schedule_data: JSON.parse(reminder.schedule_data)
-                };
-              }
-              return reminder;
-            }
+          return {
+            get: (id: string) => remindersDb.get(id),
           };
         }
 
@@ -111,13 +101,13 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
                   title,
                   description,
                   schedule_type,
-                  schedule_data: JSON.parse(schedule_data_json),
+                  schedule_data: schedule_data_json,
                   timezone,
                   enabled: Boolean(enabled),
                   next_run_at: Number(next_run_at),
                   last_run_at: last_run_at ? Number(last_run_at) : null,
                   updated_at: Number(updated_at),
-                  metadata_json: metadata_json ? JSON.parse(metadata_json) : null,
+                  metadata_json: metadata_json || null,
                 });
               } else if (sql.includes('next_run_at = ?') && sql.includes('last_run_at = ?')) {
                 // updateNextRun: next_run_at, last_run_at, updated_at, id
@@ -236,7 +226,9 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
 
       // First trigger after 1 minute
       vi.advanceTimersByTime(60000);
-      expect(triggerSpy).toHaveBeenCalledWith(reminder.id);
+      // May be called with or without recovery flag depending on watchdog timing
+      expect(triggerSpy).toHaveBeenCalled();
+      expect(triggerSpy.mock.calls[0][0]).toBe(reminder.id);
 
       // Reset the call count
       triggerSpy.mockClear();
@@ -246,8 +238,8 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
       vi.advanceTimersByTime(60000);
       
       // The reminder should have been triggered at least once more
-      // (watchdog may fire multiple times during this 60s advance)
-      expect(triggerSpy.mock.calls.filter(call => call[0] === reminder.id).length).toBeGreaterThanOrEqual(1);
+      expect(triggerSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
+      expect(triggerSpy.mock.calls[0][0]).toBe(reminder.id);
 
       // Verify the reminder is still enabled
       const updated = engine.get(reminder.id);
@@ -427,24 +419,26 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
 
       const initialNextRun = reminder.next_run_at;
 
+      // Verify the reminder was created with correct schedule_data
+      expect(reminder.schedule_data).toEqual({ time: '09:00' });
+
       engine.init();
 
-      // Verify the schedule_data is properly stored after creation
+      // Verify the schedule_data is properly stored after creation via engine.get()
       const beforeTrigger = engine.get(reminder.id);
       expect(beforeTrigger).toBeDefined();
       expect(beforeTrigger?.schedule_type).toBe('daily');
-      // The schedule_data should have the time property
       expect(beforeTrigger?.schedule_data).toEqual({ time: '09:00' });
 
-      // Manually trigger it (simulating it firing)
+      // Fire after the scheduled occurrence; a recurring reminder then advances to
+      // its following daily occurrence instead of retaining the current next-run value.
+      vi.setSystemTime(initialNextRun + 1);
       engine.triggerReminder(reminder.id);
 
-      // Verify next_run_at was recalculated and is in the future
+      // Verify next_run_at was recalculated for a future daily occurrence.
       const updated = engine.get(reminder.id);
-      expect(updated?.next_run_at).toBeGreaterThan(now);
-      expect(updated?.next_run_at).not.toBe(initialNextRun);
-      expect(updated?.enabled).toBe(true); // Still enabled for recurring
-      // After triggering, schedule_data should still be intact
+      expect(updated?.next_run_at).toBeGreaterThan(initialNextRun);
+      expect(updated?.enabled).toBe(true);
       expect(updated?.schedule_data).toEqual({ time: '09:00' });
     });
   });

@@ -21,6 +21,7 @@ export class TimerEngine {
   private activeTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private watchdogTimer: NodeJS.Timeout | null = null;
   private pomodoroCompletedCycles = 0;
+  private nextPomodoroPhase: PomodoroPhase = 'focus';
 
   constructor(
     repo?: TimersRepository,
@@ -190,7 +191,7 @@ export class TimerEngine {
     const longBreakMin = this.settingsStore.get('pomodoro.longBreakMinutes');
     const longBreakInterval = this.settingsStore.get('pomodoro.longBreakInterval');
 
-    const phase: PomodoroPhase = active?.pomodoro_phase ?? 'focus';
+    const phase: PomodoroPhase = active?.pomodoro_phase ?? this.nextPomodoroPhase;
     const completedCycles = active?.pomodoro_cycle ?? this.pomodoroCompletedCycles;
 
     return {
@@ -307,6 +308,7 @@ export class TimerEngine {
       nextPhase = 'focus';
     }
 
+    this.nextPomodoroPhase = nextPhase;
     return this.startPomodoro(nextPhase);
   }
 
@@ -385,6 +387,8 @@ export class TimerEngine {
       nextPhase = 'focus';
       this.broadcastPetTimerEvent('breakStarted', 'Break Ended', 'Break finished! Ready to begin your next focus session? 🎯');
     }
+
+    this.nextPomodoroPhase = nextPhase;
 
     const updatedState: PomodoroState = {
       activeTimer: null,
