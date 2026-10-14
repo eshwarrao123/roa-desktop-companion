@@ -142,15 +142,36 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
           };
         }
 
-        if (sql.includes('INSERT INTO reminder_events')) {
+        if (sql.includes('INSERT INTO reminder_history')) {
           return {
             run: (...args: any[]) => {
-              const [id, reminder_id, event_type, event_data_json, occurred_at] = args;
-              eventsDb.set(id, {
-                id, reminder_id, event_type,
-                event_data: event_data_json ? JSON.parse(event_data_json) : null,
-                occurred_at,
-              });
+              // Handle different reminder_history insert patterns
+              const id = args[0];
+              const reminder_id = args[1];
+              const triggered_at = args[2];
+              
+              const event: any = {
+                id,
+                reminder_id,
+                triggered_at,
+                action: 'triggered', // default
+              };
+              
+              // Detect action type from SQL or args
+              if (sql.includes("'triggered'")) {
+                event.action = 'triggered';
+              } else if (sql.includes("'snoozed'")) {
+                event.action = 'snoozed';
+                event.snoozed_until = args[3];
+              } else if (sql.includes("'dismissed'")) {
+                event.action = 'dismissed';
+                event.dismissed_at = args[3];
+              } else if (sql.includes("'completed'")) {
+                event.action = 'completed';
+                event.dismissed_at = args[3];
+              }
+              
+              eventsDb.set(id, event);
               return { changes: 1 };
             },
           };
@@ -440,6 +461,178 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
       expect(updated?.next_run_at).toBeGreaterThan(initialNextRun);
       expect(updated?.enabled).toBe(true);
       expect(updated?.schedule_data).toEqual({ time: '09:00' });
+    });
+  });
+
+  describe('M11 Phase A: Exactly-once delivery', () => {
+    it('does not trigger the same reminder multiple times within debounce window', () => {
+      const now = Date.now();
+      const triggerTime = now + 1000;
+
+      const reminder = engine.create({
+        title: 'Debounce Test',
+        schedule_type: 'one_time',
+        schedule_data: { targetTimestamp: triggerTime },
+        enabled: true,
+      });
+
+      engine.init();
+
+      // Advance to trigger time
+      vi.advanceTimersByTime(1100);
+      
+      // Record how many times it was triggered during the normal flow
+      const initialCallCount = triggerSpy.mock.calls.length;
+      expect(initialCallCount).toBeGreaterThanOrEqual(1);
+
+      // Attempt manual triggers within debounce window (5 seconds)
+      // The spy will record these calls, but the actual logic should exit early
+      engine.triggerReminder(reminder.id);
+      engine.triggerReminder(reminder.id);
+      engine.triggerReminder(reminder.id);
+
+      // Spy records all calls, but check that no actual new work happened
+      // by verifying the reminder was only completed once
+      const events = Array.from(eventsDb.values());
+      const firedEvents = events.filter((e: any) => e.action === 'triggered' && e.reminder_id === reminder.id);
+      
+      // Should have fired exactly once despite multiple triggerReminder calls
+      expect(firedEvents.length).toBe(1);
+    });
+
+    it('does not trigger a reminder whose next_run_at is in the future', () => {
+      const now = Date.now();
+      const futureTime = now + 60000;
+
+      const reminder = remindersRepo.create({
+        id: 'future-test',
+        title: 'Future Reminder',
+        description: null,
+        schedule_type: 'interval',
+        schedule_data: { intervalMinutes: 5 },
+        timezone: 'local',
+        enabled: true,
+        next_run_at: futureTime,
+        created_at: now,
+        updated_at: now,
+        metadata_json: null,
+      });
+
+      engine.init();
+
+      // Attempt to trigger a reminder that isn't due yet
+      engine.triggerReminder(reminder.id);
+
+      // Verify no event was recorded because the reminder wasn't actually triggered
+      const events = Array.from(eventsDb.values());
+      const firedEvents = events.filter((e: any) => e.action === 'triggered' && e.reminder_id === reminder.id);
+      
+      expect(firedEvents.length).toBe(0);
+    });
+
+    it('watchdog does not re-trigger a reminder that has already been rescheduled', () => {
+      const now = Date.now();
+      
+      const reminder = engine.create({
+        title: 'Watchdog Race Test',
+        schedule_type: 'interval',
+        schedule_data: { intervalMinutes: 1 },
+        enabled: true,
+      });
+
+      engine.init();
+
+      // Advance to first trigger
+      vi.advanceTimersByTime(60000);
+      
+      // Count fired events after first trigger
+      const eventsAfterFirstTrigger = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      expect(eventsAfterFirstTrigger.length).toBeGreaterThanOrEqual(1);
+      
+      // Verify next_run_at was advanced into the future
+      const afterTrigger = engine.get(reminder.id);
+      expect(afterTrigger?.next_run_at).toBeGreaterThan(now + 60000);
+      
+      const eventCountBeforeWatchdog = eventsAfterFirstTrigger.length;
+
+      // Advance watchdog interval (30s) - should NOT re-trigger
+      // because next_run_at is now in the future
+      vi.advanceTimersByTime(30000);
+      
+      // Verify no new fired events were added
+      const eventsAfterWatchdog = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      expect(eventsAfterWatchdog.length).toBe(eventCountBeforeWatchdog);
+    });
+
+    it('interval reminder advances correctly even when triggered multiple times in recovery', () => {
+      const now = Date.now();
+      
+      const reminder = remindersRepo.create({
+        id: 'interval-recovery',
+        title: 'Interval Recovery Test',
+        description: null,
+        schedule_type: 'interval',
+        schedule_data: { intervalMinutes: 2 },
+        timezone: 'local',
+        enabled: true,
+        next_run_at: now - 10000, // Overdue by 10 seconds
+        created_at: now - 120000,
+        updated_at: now - 120000,
+        metadata_json: null,
+      });
+
+      engine.init();
+
+      // Startup recovery should trigger once
+      const firedEvents = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      expect(firedEvents.length).toBe(1);
+      
+      // Verify next_run_at is genuinely in the future
+      const afterRecovery = engine.get(reminder.id);
+      expect(afterRecovery?.next_run_at).toBeGreaterThan(now);
+      expect(afterRecovery?.next_run_at).toBeLessThanOrEqual(now + (2 * 60 * 1000) + 1000);
+    });
+
+    it('one-time reminder clears active timer after completion', () => {
+      const now = Date.now();
+      const triggerTime = now + 2000;
+
+      const reminder = engine.create({
+        title: 'One-Time Timer Clear Test',
+        schedule_type: 'one_time',
+        schedule_data: { targetTimestamp: triggerTime },
+        enabled: true,
+      });
+
+      engine.init();
+
+      // Advance to trigger
+      vi.advanceTimersByTime(2100);
+      
+      const firedEvents = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      expect(firedEvents.length).toBe(1);
+      
+      // Verify reminder is disabled
+      const completed = engine.get(reminder.id);
+      expect(completed?.enabled).toBe(false);
+      
+      const eventCountBefore = firedEvents.length;
+
+      // Advance more time and ensure watchdog doesn't re-trigger completed reminder
+      vi.advanceTimersByTime(60000);
+      
+      const firedEventsAfter = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      expect(firedEventsAfter.length).toBe(eventCountBefore);
     });
   });
 });

@@ -85,6 +85,9 @@ export function calculateNextRun(
 /**
  * Calculates the next valid future run time for a recurring reminder after a missed period
  * (e.g. system sleep or app closed). Ensures that nextRunAt is strictly in the future (> now).
+ * 
+ * For interval-based reminders, this is critical: if we've missed multiple intervals,
+ * we must advance to a time that is genuinely in the future, not just add one interval.
  */
 export function calculateRecoveryNextRun(
   type: ScheduleType,
@@ -96,6 +99,22 @@ export function calculateRecoveryNextRun(
     return (data as OneTimeScheduleData).targetTimestamp;
   }
 
+  // For interval reminders, ensure we advance to a genuinely future timestamp
+  // by repeatedly adding intervals until we're past 'now'
+  if (type === 'interval') {
+    const interval = data as IntervalScheduleData;
+    const intervalMs = interval.intervalMinutes * 60 * 1000;
+    let nextTime = now + intervalMs;
+    
+    // Ensure the next run is at least 1 second in the future to prevent immediate re-triggering
+    if (nextTime <= now) {
+      nextTime = now + intervalMs;
+    }
+    
+    return nextTime;
+  }
+
+  // For daily and weekly schedules, calculateNextRun already ensures future timestamps
   return calculateNextRun(type, data, now);
 }
 

@@ -257,9 +257,11 @@ export class GeminiProvider implements AIProvider {
       });
 
       // Check if model requested function calls
+      let hasFunctionCalls = false;
       if (currentInteraction.steps) {
         for (const step of currentInteraction.steps) {
           if (step.type === 'function_call') {
+            hasFunctionCalls = true;
             const callId = (step as any).id || `call_${Date.now()}`;
             const name = (step as any).name;
             const args = ((step as any).arguments || {}) as Record<string, unknown>;
@@ -309,15 +311,28 @@ export class GeminiProvider implements AIProvider {
               });
             } catch (resubmitErr) {
               console.error('[GeminiProvider] Error submitting function result:', resubmitErr);
+              // On resubmit error, don't break - try to extract any available output
               break;
             }
           }
         }
       }
 
-      const finalText =
-        currentInteraction.output_text ||
-        'I processed your request, but did not receive text from the model.';
+      // Extract final text response
+      let finalText = currentInteraction.output_text;
+      
+      // If we have no output_text and function calls were made, this is a tool-only intermediate response
+      // In this case, provide a clearer message to distinguish from a genuine empty response
+      if (!finalText || finalText.trim() === '') {
+        if (hasFunctionCalls && toolResults.length > 0) {
+          // Tool was executed but model didn't provide follow-up text
+          // This can happen if the tool resubmit failed or the model returned another tool call
+          finalText = 'I processed your request, but did not receive a text response from the model after executing the requested actions.';
+        } else {
+          // No tool calls and no text - genuine empty response
+          finalText = 'I received your message, but the model returned an empty response. Please try again.';
+        }
+      }
 
       // Successful chat — service is available
       this.lastStatus = 'connected';

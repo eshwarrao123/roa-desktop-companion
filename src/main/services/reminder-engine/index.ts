@@ -162,10 +162,19 @@ export class ReminderEngine {
       return;
     }
 
-    // Debounce duplicate triggers within 2 seconds
-    const lastTriggered = this.recentlyTriggered.get(reminderId);
     const now = Date.now();
-    if (lastTriggered && now - lastTriggered < 2000) {
+
+    // Critical: Only trigger if this reminder is actually due or overdue.
+    // This prevents the watchdog from repeatedly triggering a reminder whose
+    // next_run_at has already been advanced into the future.
+    if (reminder.next_run_at > now) {
+      return;
+    }
+
+    // Debounce duplicate triggers within 5 seconds
+    // Extended from 2s to 5s to prevent watchdog/scheduler race conditions
+    const lastTriggered = this.recentlyTriggered.get(reminderId);
+    if (lastTriggered && now - lastTriggered < 5000) {
       return;
     }
     this.recentlyTriggered.set(reminderId, now);
@@ -194,9 +203,26 @@ export class ReminderEngine {
       });
       this.eventsRepo.recordCompleted(reminder.id, now);
       console.log(`[ReminderEngine] One-time reminder completed: "${reminder.title}"`);
+      
+      // Clear any pending timer for this completed reminder
+      if (this.activeTimers.has(reminder.id)) {
+        clearTimeout(this.activeTimers.get(reminder.id)!);
+        this.activeTimers.delete(reminder.id);
+      }
     } else {
       // Recurring reminder: recalculate nextRunAt strictly in the future (> now)
       const nextRun = calculateRecoveryNextRun(reminder.schedule_type, reminder.schedule_data, now);
+      
+      // Validate that nextRun is actually in the future
+      if (nextRun <= now) {
+        console.error(
+          `[ReminderEngine] ERROR: calculateRecoveryNextRun returned ${nextRun} which is not > now (${now}) for reminder "${reminder.title}"`
+        );
+        // Disable the reminder to prevent infinite triggering
+        this.remindersRepo.setEnabled(reminder.id, false);
+        return;
+      }
+      
       this.remindersRepo.updateNextRun(reminder.id, nextRun, now);
 
       const updated = this.remindersRepo.getById(reminder.id);
