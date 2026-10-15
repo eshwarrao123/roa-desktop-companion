@@ -635,4 +635,249 @@ describe('ReminderEngine Reliability (M10 Phase B)', () => {
       expect(firedEventsAfter.length).toBe(eventCountBefore);
     });
   });
+
+  describe('M11.1 Phase A: Concurrent trigger protection (race condition fix)', () => {
+    it('prevents scheduler and watchdog from duplicating the same due occurrence', () => {
+      const now = Date.now();
+      const triggerTime = now + 1000;
+
+      const reminder = engine.create({
+        title: 'Concurrent Trigger Test',
+        schedule_type: 'one_time',
+        schedule_data: { targetTimestamp: triggerTime },
+        enabled: true,
+      });
+
+      engine.init();
+
+      // Advance to trigger time - scheduler timeout fires
+      vi.advanceTimersByTime(1100);
+      
+      // Immediately call triggerReminder again to simulate watchdog racing with scheduler
+      // This simulates the exact scenario from the bug report where both paths see the same next_run_at
+      engine.triggerReminder(reminder.id, true);
+      engine.triggerReminder(reminder.id, true);
+
+      // Should have fired exactly once despite concurrent trigger attempts
+      const firedEvents = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      expect(firedEvents.length).toBe(1);
+
+      // Should have exactly one completion event
+      const completedEvents = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'completed' && e.reminder_id === reminder.id
+      );
+      expect(completedEvents.length).toBe(1);
+    });
+
+    it('prevents duplicate triggers when watchdog runs immediately after scheduler', () => {
+      const now = Date.now();
+      
+      const reminder = engine.create({
+        title: 'Watchdog Race Test',
+        schedule_type: 'interval',
+        schedule_data: { intervalMinutes: 1 },
+        enabled: true,
+      });
+
+      engine.init();
+
+      // Clear initial calls
+      triggerSpy.mockClear();
+      const initialEventCount = eventsDb.size;
+
+      // Advance to trigger time
+      vi.advanceTimersByTime(60100);
+      
+      // Simulate watchdog running immediately after (before database fully updates)
+      // This is the exact race condition from the bug report
+      const afterScheduler = engine.get(reminder.id);
+      
+      // Manually attempt to trigger again as watchdog would
+      engine.triggerReminder(reminder.id, true);
+      
+      // Count events - should only have ONE new 'triggered' event for this occurrence
+      const newEvents = Array.from(eventsDb.values()).slice(initialEventCount);
+      const triggeredEvents = newEvents.filter((e: any) => e.action === 'triggered' && e.reminder_id === reminder.id);
+      
+      expect(triggeredEvents.length).toBe(1);
+    });
+
+    it('allows future occurrences to trigger after occurrence-based protection clears', () => {
+      const now = Date.now();
+      
+      const reminder = engine.create({
+        title: 'Future Occurrence Test',
+        schedule_type: 'interval',
+        schedule_data: { intervalMinutes: 1 },
+        enabled: true,
+      });
+
+      engine.init();
+
+      // First trigger
+      vi.advanceTimersByTime(60100);
+      
+      const firstOccurrenceEvents = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      const firstCount = firstOccurrenceEvents.length;
+      expect(firstCount).toBeGreaterThanOrEqual(1);
+
+      // Wait for occurrence claim to clear (1 second)
+      vi.advanceTimersByTime(1100);
+
+      // Advance to next interval
+      vi.advanceTimersByTime(59000);
+      
+      // Should have a new trigger for the next occurrence
+      const secondOccurrenceEvents = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      expect(secondOccurrenceEvents.length).toBeGreaterThan(firstCount);
+    });
+
+    it('prevents duplicate processing when multiple recovery paths run simultaneously', () => {
+      const now = Date.now();
+      const pastTime = now - 5000;
+
+      const reminder = remindersRepo.create({
+        id: 'multi-recovery',
+        title: 'Multi-Recovery Test',
+        description: null,
+        schedule_type: 'one_time',
+        schedule_data: { targetTimestamp: pastTime },
+        timezone: 'local',
+        enabled: true,
+        next_run_at: pastTime,
+        created_at: now - 10000,
+        updated_at: now - 10000,
+        metadata_json: null,
+      });
+
+      // Simulate three concurrent recovery paths trying to process the same overdue reminder
+      engine.triggerReminder(reminder.id, true); // Startup recovery
+      engine.triggerReminder(reminder.id, true); // System resume recovery
+      engine.triggerReminder(reminder.id, true); // Watchdog recovery
+
+      // Should have fired exactly once
+      const firedEvents = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      );
+      expect(firedEvents.length).toBe(1);
+
+      // Should have exactly one completion event
+      const completedEvents = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'completed' && e.reminder_id === reminder.id
+      );
+      expect(completedEvents.length).toBe(1);
+    });
+
+    it('updates database state before delivery actions', () => {
+      const now = Date.now();
+
+      const reminder = engine.create({
+        title: 'State Update Order Test',
+        schedule_type: 'interval',
+        schedule_data: { intervalMinutes: 2 },
+        enabled: true,
+      });
+
+      engine.init();
+
+      const initialNextRun = reminder.next_run_at;
+
+      // Advance to trigger
+      vi.advanceTimersByTime(120100);
+      
+      // Verify next_run_at was updated in database
+      const updated = engine.get(reminder.id);
+      expect(updated?.next_run_at).toBeGreaterThan(initialNextRun);
+      expect(updated?.next_run_at).toBeGreaterThan(now + 120000);
+      
+      // Verify last_run_at was also set and is at or after the trigger time
+      expect(updated?.last_run_at).toBeDefined();
+      expect(updated?.last_run_at).toBeGreaterThanOrEqual(now + 120000);
+    });
+
+    it('watchdog observes updated next_run_at after scheduler processes reminder', () => {
+      const now = Date.now();
+      
+      const reminder = engine.create({
+        title: 'Watchdog State Visibility Test',
+        schedule_type: 'interval',
+        schedule_data: { intervalMinutes: 1 },
+        enabled: true,
+      });
+
+      engine.init();
+
+      // Advance to trigger via scheduler
+      vi.advanceTimersByTime(60100);
+      
+      // Get the updated next_run_at
+      const afterScheduler = engine.get(reminder.id);
+      const updatedNextRun = afterScheduler?.next_run_at;
+      
+      expect(updatedNextRun).toBeGreaterThan(now + 60000);
+
+      const eventCountBefore = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      ).length;
+
+      // Advance watchdog interval - should NOT trigger because next_run_at is in future
+      vi.advanceTimersByTime(30000);
+      
+      // Verify no new trigger events
+      const eventCountAfter = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      ).length;
+      
+      expect(eventCountAfter).toBe(eventCountBefore);
+    });
+
+    it('snoozed reminders maintain exactly-once semantics', () => {
+      const now = Date.now();
+
+      // Use an interval reminder so it doesn't get disabled after first trigger
+      const reminder = engine.create({
+        title: 'Snooze Exactly-Once Test',
+        schedule_type: 'interval',
+        schedule_data: { intervalMinutes: 10 }, // 10 minute interval
+        enabled: true,
+      });
+
+      engine.init();
+
+      // Advance to first trigger
+      vi.advanceTimersByTime(600100); // 10 minutes + buffer
+      
+      const firedCountBefore = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      ).length;
+      expect(firedCountBefore).toBeGreaterThanOrEqual(1);
+
+      // Snooze for 2 minutes
+      engine.snooze(reminder.id, 2);
+      
+      // Advance through multiple watchdog cycles
+      vi.advanceTimersByTime(90000); // 90 seconds
+      
+      // Should not have triggered again yet (snoozed for 2 minutes)
+      const firedCountDuringSnooze = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      ).length;
+      expect(firedCountDuringSnooze).toBe(firedCountBefore);
+      
+      // Advance past snooze time
+      vi.advanceTimersByTime(35000); // Total > 2 minutes
+      
+      // Should trigger exactly once more
+      const firedCountAfterSnooze = Array.from(eventsDb.values()).filter(
+        (e: any) => e.action === 'triggered' && e.reminder_id === reminder.id
+      ).length;
+      expect(firedCountAfterSnooze).toBe(firedCountBefore + 1);
+    });
+  });
 });

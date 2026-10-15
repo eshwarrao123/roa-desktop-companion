@@ -22,7 +22,8 @@ export class ReminderEngine {
   private windowManager: WindowManager;
   private activeTimers: Map<string, NodeJS.Timeout> = new Map();
   private watchdogTimer: NodeJS.Timeout | null = null;
-  private recentlyTriggered: Map<string, number> = new Map(); // Debounce duplicate triggers
+  // Occurrence-based duplicate protection: maps reminder ID to the due timestamp being processed
+  private processingOccurrences: Map<string, number> = new Map();
 
   constructor(
     remindersRepo?: RemindersRepository,
@@ -155,6 +156,9 @@ export class ReminderEngine {
 
   /**
    * Fires a reminder: creates desktop notification, pet event, logs history, and reschedules.
+   * 
+   * Critical: This method atomically claims and processes a due occurrence to prevent
+   * concurrent paths (scheduler + watchdog + recovery) from duplicating the same trigger.
    */
   public triggerReminder(reminderId: string, isRecovery: boolean = false): void {
     const reminder = this.remindersRepo.getById(reminderId);
@@ -171,13 +175,18 @@ export class ReminderEngine {
       return;
     }
 
-    // Debounce duplicate triggers within 5 seconds
-    // Extended from 2s to 5s to prevent watchdog/scheduler race conditions
-    const lastTriggered = this.recentlyTriggered.get(reminderId);
-    if (lastTriggered && now - lastTriggered < 5000) {
+    // Occurrence-based duplicate protection: Check if this exact due occurrence is already being processed
+    // This is keyed by reminder ID, but the value is the due timestamp we're claiming to process.
+    const dueOccurrence = reminder.next_run_at;
+    const currentlyProcessing = this.processingOccurrences.get(reminderId);
+    
+    if (currentlyProcessing === dueOccurrence) {
+      // Another path is already processing this exact occurrence - skip
       return;
     }
-    this.recentlyTriggered.set(reminderId, now);
+    
+    // Claim this occurrence
+    this.processingOccurrences.set(reminderId, dueOccurrence);
 
     console.log(
       `[ReminderEngine] Triggering reminder: "${reminder.title}" (ID: ${reminder.id})${
@@ -185,54 +194,70 @@ export class ReminderEngine {
       }`
     );
 
-    // 1. Native Desktop Notification (works even if dashboard is closed)
-    this.showNativeNotification(reminder);
+    try {
+      // CRITICAL: Update database state FIRST, before delivery actions
+      // This ensures watchdog and other concurrent paths see the updated state immediately
+      if (reminder.schedule_type === 'one_time') {
+        // One-time reminder completes after firing
+        this.remindersRepo.update(reminder.id, {
+          enabled: false,
+          last_run_at: now,
+        });
+        this.eventsRepo.recordCompleted(reminder.id, now);
+        console.log(`[ReminderEngine] One-time reminder completed: "${reminder.title}"`);
+        
+        // Clear any pending timer for this completed reminder
+        if (this.activeTimers.has(reminder.id)) {
+          clearTimeout(this.activeTimers.get(reminder.id)!);
+          this.activeTimers.delete(reminder.id);
+        }
+      } else {
+        // Recurring reminder: recalculate nextRunAt strictly in the future (> now)
+        const nextRun = calculateRecoveryNextRun(reminder.schedule_type, reminder.schedule_data, now);
+        
+        // Validate that nextRun is actually in the future
+        if (nextRun <= now) {
+          console.error(
+            `[ReminderEngine] ERROR: calculateRecoveryNextRun returned ${nextRun} which is not > now (${now}) for reminder "${reminder.title}"`
+          );
+          // Disable the reminder to prevent infinite triggering
+          this.remindersRepo.setEnabled(reminder.id, false);
+          return;
+        }
+        
+        // Update database BEFORE delivery to prevent race conditions
+        this.remindersRepo.updateNextRun(reminder.id, nextRun, now);
 
-    // 2. Pet Window Reaction
-    this.notifyPetWindow(reminder);
-
-    // 3. Record History Event
-    this.eventsRepo.recordFired(reminder.id, now);
-
-    // 4. Handle Next Occurrence
-    if (reminder.schedule_type === 'one_time') {
-      // One-time reminder completes after firing
-      this.remindersRepo.update(reminder.id, {
-        enabled: false,
-        last_run_at: now,
-      });
-      this.eventsRepo.recordCompleted(reminder.id, now);
-      console.log(`[ReminderEngine] One-time reminder completed: "${reminder.title}"`);
-      
-      // Clear any pending timer for this completed reminder
-      if (this.activeTimers.has(reminder.id)) {
-        clearTimeout(this.activeTimers.get(reminder.id)!);
-        this.activeTimers.delete(reminder.id);
+        // Reschedule with the updated state
+        const updated = this.remindersRepo.getById(reminder.id);
+        if (updated && updated.enabled) {
+          this.scheduleReminder(updated);
+        }
       }
-    } else {
-      // Recurring reminder: recalculate nextRunAt strictly in the future (> now)
-      const nextRun = calculateRecoveryNextRun(reminder.schedule_type, reminder.schedule_data, now);
-      
-      // Validate that nextRun is actually in the future
-      if (nextRun <= now) {
-        console.error(
-          `[ReminderEngine] ERROR: calculateRecoveryNextRun returned ${nextRun} which is not > now (${now}) for reminder "${reminder.title}"`
-        );
-        // Disable the reminder to prevent infinite triggering
-        this.remindersRepo.setEnabled(reminder.id, false);
-        return;
-      }
-      
-      this.remindersRepo.updateNextRun(reminder.id, nextRun, now);
 
-      const updated = this.remindersRepo.getById(reminder.id);
-      if (updated && updated.enabled) {
-        this.scheduleReminder(updated);
-      }
+      // Now perform delivery actions (these can be slower without risking duplication)
+      
+      // 1. Record History Event
+      this.eventsRepo.recordFired(reminder.id, now);
+
+      // 2. Native Desktop Notification (works even if dashboard is closed)
+      this.showNativeNotification(reminder);
+
+      // 3. Pet Window Reaction
+      this.notifyPetWindow(reminder);
+
+      // 4. Notify Dashboard if open
+      this.notifyDashboardWindow(reminder);
+      
+    } finally {
+      // Release the occurrence claim after a short delay to prevent rapid re-entry
+      // This gives the database update time to propagate and other paths time to see the new state
+      setTimeout(() => {
+        if (this.processingOccurrences.get(reminderId) === dueOccurrence) {
+          this.processingOccurrences.delete(reminderId);
+        }
+      }, 1000);
     }
-
-    // 5. Notify Dashboard if open
-    this.notifyDashboardWindow(reminder);
   }
 
   /**
