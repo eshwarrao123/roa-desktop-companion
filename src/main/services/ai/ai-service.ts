@@ -114,16 +114,23 @@ export class AIService extends EventEmitter {
       status = await this.geminiProvider.getStatus();
     }
 
-    // Derive credential status (not affected by transient service errors)
+    // Derive credential status independently of transient service errors.
+    // Only mark as 'invalid' when the provider explicitly reports invalid_credential.
+    // Otherwise, if configured and not explicitly invalid, assume 'verified'.
     let credentialStatus: AICredentialStatus = 'not_configured';
     if (isConfigured) {
-      credentialStatus =
-        status === 'invalid_credential' ? 'invalid' : 'verified';
+      credentialStatus = status === 'invalid_credential' ? 'invalid' : 'verified';
     }
 
-    // Derive service status
+    // Derive service status from provider status.
+    // If no key is configured or provider is disabled, service is unknown.
+    // If status is 'not_configured' from the provider despite having a key, that means
+    // the provider hasn't been tested yet, so service status remains unknown until tested.
     let serviceStatus: AIServiceStatus = 'unknown';
     if (!isConfigured || providerSetting !== 'gemini') {
+      serviceStatus = 'unknown';
+    } else if (status === 'not_configured') {
+      // Key exists but provider hasn't been tested yet
       serviceStatus = 'unknown';
     } else if (status === 'connected') {
       serviceStatus = 'available';

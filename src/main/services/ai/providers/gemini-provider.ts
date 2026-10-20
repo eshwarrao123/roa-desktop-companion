@@ -321,13 +321,24 @@ export class GeminiProvider implements AIProvider {
       // Extract final text response
       let finalText = currentInteraction.output_text;
       
-      // If we have no output_text and function calls were made, this is a tool-only intermediate response
-      // In this case, provide a clearer message to distinguish from a genuine empty response
+      // Handle empty or missing output_text
       if (!finalText || finalText.trim() === '') {
         if (hasFunctionCalls && toolResults.length > 0) {
-          // Tool was executed but model didn't provide follow-up text
-          // This can happen if the tool resubmit failed or the model returned another tool call
-          finalText = 'I processed your request, but did not receive a text response from the model after executing the requested actions.';
+          // Tool was executed but model didn't provide follow-up text.
+          // Check if we have any successful tool results to report.
+          const successfulTools = toolResults.filter(tr => {
+            const result = tr.result as any;
+            return !result?.error;
+          });
+          
+          if (successfulTools.length > 0) {
+            // Provide a helpful message indicating the action was completed
+            const toolNames = successfulTools.map(tr => tr.name).join(', ');
+            finalText = `I completed the requested action (${toolNames}), but the model did not provide a follow-up response. The action was successful.`;
+          } else {
+            // Tool execution failed or returned errors
+            finalText = 'I attempted to process your request, but did not receive a complete response from the model.';
+          }
         } else {
           // No tool calls and no text - genuine empty response
           finalText = 'I received your message, but the model returned an empty response. Please try again.';
@@ -426,10 +437,9 @@ export class GeminiProvider implements AIProvider {
     if (!(await this.isConfigured())) {
       return 'not_configured';
     }
-    // If we've never tested, default to 'connected' (key exists, not yet validated)
-    if (this.lastStatus === 'not_configured') {
-      return 'connected';
-    }
+    // Return the actual last known status.
+    // Do not default to 'connected' merely because a key exists.
+    // Status is only updated after actual API interactions (testConnection or chat).
     return this.lastStatus;
   }
 }

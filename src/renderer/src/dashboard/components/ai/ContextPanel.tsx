@@ -53,6 +53,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ statusInfo }) => {
 
   const isConfigured = statusInfo?.isConfigured && statusInfo?.provider === 'gemini';
   const isAvailable = statusInfo?.serviceStatus === 'available';
+  const isReady = isConfigured && statusInfo?.serviceStatus !== 'offline';
 
   return (
     <div className="space-y-6">
@@ -116,9 +117,9 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ statusInfo }) => {
             AI
           </p>
           <StatusPip
-            color={isConfigured && isAvailable ? 'sage' : 'gray'}
+            color={isAvailable ? 'sage' : isReady ? 'gray' : 'gray'}
             size="sm"
-            label={isConfigured && isAvailable ? 'Connected' : isConfigured ? 'Ready' : 'Not configured'}
+            label={isAvailable ? 'Ready' : isReady ? 'Configured' : 'Not configured'}
           />
         </div>
       </div>

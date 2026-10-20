@@ -29,7 +29,7 @@ export const QuickAskRoa: React.FC<QuickAskRoaProps> = ({ onNavigateToAI }) => {
     return undefined;
   }, []);
 
-  const isAvailable = aiProvider === 'gemini' && aiStatus === 'connected';
+  const isAvailable = aiProvider === 'gemini' && (aiStatus === 'connected' || aiStatus === 'not_configured');
 
   return (
     <div className="space-y-3">

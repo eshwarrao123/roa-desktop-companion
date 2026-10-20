@@ -112,6 +112,7 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
   const isFullyAvailable = isConfigured && serviceStatus === 'available';
   const isDailyQuota = serviceStatus === 'daily_quota_exceeded';
   const isTemporarilyUnavailable = serviceStatus === 'temporarily_unavailable';
+  const isReady = isConfigured && serviceStatus !== 'offline';
 
   return (
     <div className="flex gap-8 h-[calc(100vh-140px)] max-w-7xl">
@@ -122,9 +123,9 @@ export const AITabContent: React.FC<AITabContentProps> = ({ onNavigateToSettings
           <div className="flex items-center gap-3">
             <h2 className="text-page-title-sm text-roa-text-primary">Ask Roa</h2>
             <StatusPip
-              color={isFullyAvailable ? 'sage' : 'gray'}
+              color={isFullyAvailable ? 'sage' : isReady ? 'gray' : 'gray'}
               size="sm"
-              label={isFullyAvailable ? 'Connected' : isConfigured ? 'Ready' : 'Offline'}
+              label={isFullyAvailable ? 'Ready' : isReady ? 'Configured' : 'Not configured'}
             />
           </div>
 
