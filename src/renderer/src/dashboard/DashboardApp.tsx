@@ -8,6 +8,7 @@ import { RemindersTabContent } from './components/reminders';
 import { SettingsTabContent } from './components/settings';
 import { AIProviderStatus } from '@shared/types/ai';
 import { DashboardShell } from './layout/DashboardShell';
+import { TimerToast } from './components/ui/TimerToast';
 
 export const DashboardApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'reminders' | 'timers' | 'ai' | 'settings'>('overview');
@@ -272,7 +273,9 @@ export const DashboardApp: React.FC = () => {
 
 
   return (
-    <DashboardShell activeTab={activeTab} onTabChange={setActiveTab}>
+    <>
+      <TimerToast />
+      <DashboardShell activeTab={activeTab} onTabChange={setActiveTab}>
         {activeTab === 'overview' && (
           <HomeTabContent
             onNavigateToFocus={() => setActiveTab('timers')}
@@ -332,6 +335,7 @@ export const DashboardApp: React.FC = () => {
             onRemoveAiCredential={handleRemoveAiCredential}
           />
         )}
-    </DashboardShell>
+      </DashboardShell>
+    </>
   );
 };

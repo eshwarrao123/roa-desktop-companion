@@ -108,6 +108,13 @@ const roaApi: ElectronRoaAPI = {
         ipcRenderer.removeListener('roa:timers:stateChanged', handler);
       };
     },
+    onCompleted: (callback: (completion: any) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, completion: any) => callback(completion);
+      ipcRenderer.on('roa:timers:completed', handler);
+      return () => {
+        ipcRenderer.removeListener('roa:timers:completed', handler);
+      };
+    },
   },
   pomodoro: {
     getState: () => ipcRenderer.invoke('roa:pomodoro:getState'),

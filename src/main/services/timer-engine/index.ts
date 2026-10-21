@@ -404,7 +404,11 @@ export class TimerEngine {
   }
 
   private showNativeNotification(timer: Timer): void {
-    if (!Notification.isSupported()) return;
+    if (!Notification.isSupported()) {
+      console.log('[TimerEngine] Native notifications not supported on this platform');
+      this.showFallbackNotification(timer);
+      return;
+    }
 
     let title = 'ROA Timer';
     let body = `${timer.label} has finished!`;
@@ -423,18 +427,68 @@ export class TimerEngine {
       ? path.join(process.resourcesPath, 'assets', 'icons', 'tray.png')
       : path.join(process.cwd(), 'assets', 'icons', 'tray.png');
 
-    const notification = new Notification({
-      title,
-      body,
-      icon: iconPath,
-      silent: false,
-    });
+    try {
+      const notification = new Notification({
+        title,
+        body,
+        icon: iconPath,
+        silent: false,
+      });
 
-    notification.on('click', () => {
-      this.windowManager.showDashboard();
-    });
+      let notificationDelivered = false;
 
-    notification.show();
+      notification.on('show', () => {
+        notificationDelivered = true;
+        console.log(`[TimerEngine] Native notification delivered: "${title}"`);
+      });
+
+      notification.on('click', () => {
+        this.windowManager.showDashboard();
+      });
+
+      notification.on('failed', (_error, errorMessage) => {
+        const hresultMatch = errorMessage.match(/HRESULT:(-?\d+)/);
+        const hresult = hresultMatch ? parseInt(hresultMatch[1], 10) : null;
+        
+        if (hresult === -2143420140) {
+          console.error('[TimerEngine] Notification blocked by Windows settings (WPN_E_NOTIFICATION_TYPE_DISABLED).');
+          console.error('[TimerEngine] Please enable notifications for ROA in Windows Settings > System > Notifications.');
+        } else {
+          console.error(`[TimerEngine] Notification delivery failed: ${errorMessage}`);
+        }
+
+        // Deliver fallback notification
+        this.showFallbackNotification(timer);
+      });
+
+      notification.show();
+      console.log(`[TimerEngine] Native notification requested: "${title}"`);
+
+      // Windows notification failures may be reported after a delay
+      // Give the notification 500ms to confirm delivery or fail
+      setTimeout(() => {
+        if (!notificationDelivered) {
+          // No 'show' event received; assume silent failure
+          this.showFallbackNotification(timer);
+        }
+      }, 500);
+    } catch (error) {
+      console.error('[TimerEngine] Error creating notification:', error);
+      this.showFallbackNotification(timer);
+    }
+  }
+
+  private showFallbackNotification(timer: Timer): void {
+    // Deliver readable in-app notification via dashboard
+    const dashWin = this.windowManager.getDashboardWindow();
+    if (dashWin && !dashWin.isDestroyed()) {
+      dashWin.webContents.send('roa:timers:completed', {
+        id: timer.id,
+        label: timer.label,
+        type: timer.type,
+        phase: timer.pomodoro_phase,
+      });
+    }
   }
 
   private performStartupRecovery(): void {

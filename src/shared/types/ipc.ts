@@ -90,6 +90,7 @@ export interface ElectronRoaAPI {
     cancel: (id: string) => Promise<void>;
     getActive: () => Promise<Timer | null>;
     onStateChanged: (callback: (timer: Timer) => void) => () => void;
+    onCompleted: (callback: (completion: { id: string; label: string; type: string; phase?: string }) => void) => () => void;
   };
   pomodoro: {
     getState: () => Promise<PomodoroState>;

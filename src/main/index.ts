@@ -34,6 +34,11 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     console.log('[Main] ROA starting up...');
 
+    // Set App User Model ID for Windows notifications
+    if (process.platform === 'win32') {
+      app.setAppUserModelId('ai.roa.desktop-companion');
+    }
+
     // 1. Initialize SQLite and run migrations
     initDb();
 
