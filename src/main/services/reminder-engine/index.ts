@@ -261,26 +261,110 @@ export class ReminderEngine {
   }
 
   /**
-   * Displays native Windows notification.
+   * Displays native Windows notification with fallback handling.
+   * Uses per-notification state to prevent duplicate fallback dispatches.
    */
   private showNativeNotification(reminder: Reminder): void {
+    if (!Notification.isSupported()) {
+      console.log('[ReminderEngine] Native notifications not supported on this platform');
+      this.showFallbackNotification(reminder);
+      return;
+    }
+
+    const iconPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'assets/icons/tray.png')
+      : path.join(process.cwd(), 'assets', 'icons', 'tray.png');
+
     try {
-      if (Notification.isSupported()) {
-        const iconPath = app.isPackaged
-          ? path.join(process.resourcesPath, 'assets/icons/tray.png')
-          : path.join(__dirname, '../../../../assets/icons/tray.png');
+      const notification = new Notification({
+        title: 'ROA Reminder',
+        body: reminder.description ? `${reminder.title}\n${reminder.description}` : reminder.title,
+        icon: iconPath,
+        silent: false,
+      });
 
-        const notification = new Notification({
-          title: 'ROA Reminder',
-          body: reminder.description ? `${reminder.title}\n${reminder.description}` : reminder.title,
-          icon: iconPath,
-          silent: false,
-        });
+      // Per-notification delivery state to prevent duplicate fallback dispatch
+      let notificationState: 'pending' | 'delivered' | 'failed' = 'pending';
+      let fallbackTimeoutHandle: NodeJS.Timeout | null = null;
 
-        notification.show();
-      }
-    } catch (err) {
-      console.error('[ReminderEngine] Failed to show desktop notification:', err);
+      const dispatchFallback = () => {
+        if (notificationState !== 'pending') {
+          return;
+        }
+        notificationState = 'failed';
+        if (fallbackTimeoutHandle) {
+          clearTimeout(fallbackTimeoutHandle);
+          fallbackTimeoutHandle = null;
+        }
+        this.showFallbackNotification(reminder);
+      };
+
+      notification.on('show', () => {
+        if (notificationState === 'pending') {
+          notificationState = 'delivered';
+          console.log(`[ReminderEngine] Native notification delivered: "${reminder.title}"`);
+          // Cancel pending fallback timeout
+          if (fallbackTimeoutHandle) {
+            clearTimeout(fallbackTimeoutHandle);
+            fallbackTimeoutHandle = null;
+          }
+        } else if (notificationState === 'failed') {
+          // Rare race: 'show' arrived after timeout already fired fallback
+          console.log(`[ReminderEngine] Native notification confirmed after fallback dispatched: "${reminder.title}"`);
+        }
+      });
+
+      notification.on('click', () => {
+        this.windowManager.showDashboard();
+      });
+
+      notification.on('failed', (_error, errorMessage) => {
+        const hresultMatch = errorMessage.match(/HRESULT:(-?\d+)/);
+        const hresult = hresultMatch ? parseInt(hresultMatch[1], 10) : null;
+
+        if (hresult === -2143420140) {
+          console.error('[ReminderEngine] Notification blocked by Windows settings (WPN_E_NOTIFICATION_TYPE_DISABLED).');
+          console.error('[ReminderEngine] Please enable notifications for ROA in Windows Settings > System > Notifications.');
+        } else {
+          console.error(`[ReminderEngine] Notification delivery failed: ${errorMessage}`);
+        }
+
+        // Deliver fallback notification (guarded against duplicates)
+        dispatchFallback();
+      });
+
+      notification.show();
+      console.log(`[ReminderEngine] Native notification requested: "${reminder.title}"`);
+
+      // Windows notification failures may be reported after a delay
+      // Give the notification 500ms to confirm delivery or fail
+      fallbackTimeoutHandle = setTimeout(() => {
+        if (notificationState === 'pending') {
+          // No 'show' event received; assume silent failure
+          console.log(`[ReminderEngine] Native notification timeout, using fallback: "${reminder.title}"`);
+          dispatchFallback();
+        }
+      }, 500);
+    } catch (error) {
+      console.error('[ReminderEngine] Error creating notification:', error);
+      this.showFallbackNotification(reminder);
+    }
+  }
+
+  /**
+   * Delivers in-app fallback notification when native notifications fail.
+   * Sends dedicated 'roa:reminders:notificationFallback' event to ReminderToast.
+   */
+  private showFallbackNotification(reminder: Reminder): void {
+    console.log(`[ReminderEngine] Fallback notification: "${reminder.title}"`);
+
+    const dashWin = this.windowManager.getDashboardWindow();
+    if (dashWin && !dashWin.isDestroyed()) {
+      dashWin.webContents.send('roa:reminders:notificationFallback', {
+        id: reminder.id,
+        title: reminder.title,
+        description: reminder.description,
+      });
     }
   }
 

@@ -9,6 +9,7 @@ import { SettingsTabContent } from './components/settings';
 import { AIProviderStatus } from '@shared/types/ai';
 import { DashboardShell } from './layout/DashboardShell';
 import { TimerToast } from './components/ui/TimerToast';
+import { ReminderToast } from './components/ui/ReminderToast';
 
 export const DashboardApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'reminders' | 'timers' | 'ai' | 'settings'>('overview');
@@ -275,6 +276,7 @@ export const DashboardApp: React.FC = () => {
   return (
     <>
       <TimerToast />
+      <ReminderToast />
       <DashboardShell activeTab={activeTab} onTabChange={setActiveTab}>
         {activeTab === 'overview' && (
           <HomeTabContent

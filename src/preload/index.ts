@@ -90,6 +90,14 @@ const roaApi: ElectronRoaAPI = {
         ipcRenderer.removeListener('roa:reminders:triggered', handler);
       };
     },
+    onReminderNotificationFallback: (callback: (event: { id: string; title: string; description: string | null }) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, data: { id: string; title: string; description: string | null }) =>
+        callback(data);
+      ipcRenderer.on('roa:reminders:notificationFallback', handler);
+      return () => {
+        ipcRenderer.removeListener('roa:reminders:notificationFallback', handler);
+      };
+    },
   },
   timers: {
     list: (limit?: number) => ipcRenderer.invoke('roa:timers:list', limit),

@@ -78,6 +78,7 @@ export interface ElectronRoaAPI {
     snooze: (id: string, minutes: number) => Promise<void>;
     getHistory: (reminderId: string, limit?: number) => Promise<ReminderHistory[]>;
     onReminderTriggered: (callback: (reminder: Reminder) => void) => () => void;
+    onReminderNotificationFallback: (callback: (event: { id: string; title: string; description: string | null }) => void) => () => void;
   };
   timers: {
     list: () => Promise<Timer[]>;
