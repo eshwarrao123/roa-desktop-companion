@@ -18,6 +18,7 @@ vi.mock('electron', () => ({
     static isSupported() {
       return true;
     }
+    on() {}
     show() {}
   },
 }));
