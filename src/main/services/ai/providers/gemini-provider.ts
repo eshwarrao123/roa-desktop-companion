@@ -50,6 +50,27 @@ export class GeminiProvider implements AIProvider {
     return this.credentialStore.hasApiKey();
   }
 
+  /**
+   * Wraps a promise with a timeout to prevent indefinite hanging.
+   * Throws an error if the promise doesn't resolve within the specified time.
+   * Properly cleans up the timeout handle when the promise settles.
+   */
+  private withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
+    let timeoutHandle: NodeJS.Timeout | null = null;
+
+    const timeoutPromise = new Promise<T>((_, reject) => {
+      timeoutHandle = setTimeout(() => {
+        reject(new Error(timeoutMessage));
+      }, timeoutMs);
+    });
+
+    return Promise.race([promise, timeoutPromise]).finally(() => {
+      if (timeoutHandle !== null) {
+        clearTimeout(timeoutHandle);
+      }
+    });
+  }
+
   public async testConnection(apiKey?: string): Promise<{
     success: boolean;
     error?: string;
@@ -249,12 +270,24 @@ export class GeminiProvider implements AIProvider {
     const toolResults: Array<{ callId: string; name: string; result: unknown }> = [];
 
     try {
-      let currentInteraction = await client.interactions.create({
-        model: this.model,
-        system_instruction: systemInstruction,
-        input: prompt,
-        tools,
-      });
+      console.log('[GeminiProvider] Starting chat request...');
+      
+      // Wrap the API call with a timeout to prevent indefinite hanging
+      // 60 seconds is reasonable for AI responses including potential tool execution
+      const REQUEST_TIMEOUT_MS = 60000;
+      
+      let currentInteraction = await this.withTimeout(
+        client.interactions.create({
+          model: this.model,
+          system_instruction: systemInstruction,
+          input: prompt,
+          tools,
+        }),
+        REQUEST_TIMEOUT_MS,
+        'Initial Gemini API request timed out'
+      );
+      
+      console.log('[GeminiProvider] Received initial response, checking for tool calls...');
 
       // Check if model requested function calls
       let hasFunctionCalls = false;
@@ -296,19 +329,25 @@ export class GeminiProvider implements AIProvider {
 
             // Send function result back to Gemini to produce final response
             try {
-              currentInteraction = await client.interactions.create({
-                model: this.model,
-                input: [
-                  {
-                    type: 'function_result',
-                    name,
-                    call_id: callId,
-                    result: [{ type: 'text', text: JSON.stringify(resultPayload) }],
-                  },
-                ],
-                tools,
-                previous_interaction_id: currentInteraction.id,
-              });
+              console.log(`[GeminiProvider] Submitting tool result for ${name}...`);
+              currentInteraction = await this.withTimeout(
+                client.interactions.create({
+                  model: this.model,
+                  input: [
+                    {
+                      type: 'function_result',
+                      name,
+                      call_id: callId,
+                      result: [{ type: 'text', text: JSON.stringify(resultPayload) }],
+                    },
+                  ],
+                  tools,
+                  previous_interaction_id: currentInteraction.id,
+                }),
+                REQUEST_TIMEOUT_MS,
+                'Tool result submission timed out'
+              );
+              console.log('[GeminiProvider] Received response after tool execution');
             } catch (resubmitErr) {
               console.error('[GeminiProvider] Error submitting function result:', resubmitErr);
               // On resubmit error, don't break - try to extract any available output
@@ -366,6 +405,12 @@ export class GeminiProvider implements AIProvider {
         err?.code || (err?.cause ? (err.cause as any).code : undefined);
 
       console.error('[GeminiProvider] Chat error:', sanitized);
+
+      // Request timeout
+      if (sanitized.includes('timed out')) {
+        this.lastStatus = 'error';
+        throw new Error('The request took too long to complete. Gemini may be experiencing delays. Please try again.');
+      }
 
       // Daily quota exhausted
       const isDailyQuota =
