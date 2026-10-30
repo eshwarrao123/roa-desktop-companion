@@ -22,6 +22,7 @@ export class TimerEngine {
   private watchdogTimer: NodeJS.Timeout | null = null;
   private pomodoroCompletedCycles = 0;
   private nextPomodoroPhase: PomodoroPhase = 'focus';
+  private initialized = false;
 
   constructor(
     repo?: TimersRepository,
@@ -34,6 +35,11 @@ export class TimerEngine {
   }
 
   public init(): void {
+    if (this.initialized) {
+      console.warn('[TimerEngine] Already initialized. Skipping duplicate init.');
+      return;
+    }
+
     console.log('[TimerEngine] Initializing local timer engine...');
 
     // 1. Startup recovery: Check for any running timers that elapsed while app was closed
@@ -55,6 +61,7 @@ export class TimerEngine {
       });
     }
 
+    this.initialized = true;
     console.log('[TimerEngine] Timer engine initialized.');
   }
 
@@ -65,6 +72,7 @@ export class TimerEngine {
       clearInterval(this.watchdogTimer);
       this.watchdogTimer = null;
     }
+    this.initialized = false;
   }
 
   // ==========================================

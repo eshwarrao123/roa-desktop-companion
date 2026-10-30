@@ -34,6 +34,13 @@ vi.mock('electron', () => ({
   },
 }));
 
+vi.mock('child_process', () => ({
+  execFile: vi.fn((cmd, args, options, callback) => {
+    // Immediately resolve with no battery (desktop)
+    callback(new Error('No battery'), '', '');
+  }),
+}));
+
 describe('SystemService', () => {
   let settingsDb: Map<string, any>;
   let mockDb: Database.Database;

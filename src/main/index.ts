@@ -101,6 +101,7 @@ if (!gotTheLock) {
     getReminderEngine().shutdown();
     getTimerEngine().shutdown();
     getSystemService().shutdown();
+    getTrayManager().shutdown();
     closeDb();
   });
 

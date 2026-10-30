@@ -24,6 +24,7 @@ export class ReminderEngine {
   private watchdogTimer: NodeJS.Timeout | null = null;
   // Occurrence-based duplicate protection: maps reminder ID to the due timestamp being processed
   private processingOccurrences: Map<string, number> = new Map();
+  private initialized = false;
 
   constructor(
     remindersRepo?: RemindersRepository,
@@ -36,6 +37,11 @@ export class ReminderEngine {
   }
 
   public init(): void {
+    if (this.initialized) {
+      console.warn('[ReminderEngine] Already initialized. Skipping duplicate init.');
+      return;
+    }
+
     console.log('[ReminderEngine] Initializing local reminder engine...');
 
     // 1. Startup recovery: detect missed reminders and reschedule
@@ -57,6 +63,7 @@ export class ReminderEngine {
       });
     }
 
+    this.initialized = true;
     console.log('[ReminderEngine] Reminder engine initialized successfully.');
   }
 
@@ -67,6 +74,7 @@ export class ReminderEngine {
       clearInterval(this.watchdogTimer);
       this.watchdogTimer = null;
     }
+    this.initialized = false;
   }
 
   /**

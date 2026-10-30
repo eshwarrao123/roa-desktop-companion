@@ -33,6 +33,13 @@ export class TrayManager {
     return this.tray;
   }
 
+  public shutdown(): void {
+    if (this.tray) {
+      this.tray.destroy();
+      this.tray = null;
+    }
+  }
+
   public updateContextMenu(): void {
     if (!this.tray) return;
 

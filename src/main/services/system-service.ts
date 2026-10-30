@@ -21,6 +21,7 @@ export class SystemService {
   private isSystemIdle = false;
   private batteryCheckTimer: NodeJS.Timeout | null = null;
   private idleCheckTimer: NodeJS.Timeout | null = null;
+  private initialized = false;
 
   constructor(windowManager?: WindowManager, settingsStore?: SettingsStore) {
     this.windowManager = windowManager ?? getWindowManager();
@@ -28,6 +29,11 @@ export class SystemService {
   }
 
   public init(): void {
+    if (this.initialized) {
+      console.warn('[SystemService] Already initialized. Skipping duplicate init.');
+      return;
+    }
+
     console.log('[SystemService] Initializing system integration services...');
 
     // 1. Register Global Shortcut
@@ -39,6 +45,7 @@ export class SystemService {
     // 3. Setup Idle Monitoring
     this.initIdleMonitoring();
 
+    this.initialized = true;
     console.log('[SystemService] System integration services initialized.');
   }
 
@@ -56,6 +63,7 @@ export class SystemService {
       clearInterval(this.idleCheckTimer);
       this.idleCheckTimer = null;
     }
+    this.initialized = false;
   }
 
   // ==========================================
