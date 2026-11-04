@@ -424,6 +424,20 @@ export function registerIpcHandlers(
     store.set(key, value as AppSettings[SettingKey]);
   });
 
+  // Subscribe to settings changes and broadcast to all windows
+  store.on('change', (changes: Partial<AppSettings>) => {
+    const dashWin = winManager.getDashboardWindow();
+    const petWin = winManager.getPetWindow();
+
+    if (dashWin && !dashWin.isDestroyed()) {
+      dashWin.webContents.send('roa:settings:changed', changes);
+    }
+
+    if (petWin && !petWin.isDestroyed()) {
+      petWin.webContents.send('roa:settings:changed', changes);
+    }
+  });
+
   // App lifecycle handlers
   ipcMain.handle('roa:app:quit', async (): Promise<void> => {
     (app as unknown as { isQuitting: boolean }).isQuitting = true;
